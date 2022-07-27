@@ -32,14 +32,20 @@ echo $BASDARD_UI
 
 
 start_niceui() {
-   (sleep 0.3 && niceQUI --XXX.CONFIG:Endpoint=${BASDARD_ADAPTER}${BASDARD_UI} --LOGGER.LEVEL=INFO) &
+   sleep 0.3 && niceQUI --XXX.CONFIG:Endpoint=${BASDARD_ADAPTER}${BASDARD_UI} --LOGGER.LEVEL=INFO
+}
+
+max_niceui() {
+    while [[ -z $(wmctrl -l) ]]; do sleep 0.1; done
+    wmctrl -r ':ACTIVE:' -b toggle,fullscreen
 }
 
 if [ $VNC_GEOM ]; then
     Xvnc :0 -geometry $VNC_GEOM &
     export DISPLAY=:0
     fluxbox &
-    start_niceui
+    start_niceui &
+    max_niceui &
 elif [ ${DISPLAY} ]; then
     start_niceui
 fi
