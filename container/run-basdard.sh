@@ -47,7 +47,7 @@ if [ $VNC_GEOM ]; then
     start_niceui &
     max_niceui &
 elif [ ${DISPLAY} ]; then
-    start_niceui
+    start_niceui &
 fi
 
 basdard --CONFIG=${BASDARD_CONFIG} --ADAPTER=${BASDARD_ADAPTER} --CLU.RABBITMQ.CONN:MapStringString=${RMQ_CONNECTION} --LOGGER.LEVEL=INFO
