@@ -131,7 +131,17 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                     self.sid.mpiaMocon(geoloc, point, None, deltaTime=deltaTime, polyN=1, time=nowpdt)
                     setSegment(km, upidx, traj[0], traj[1])
                     upidx+=1
-                sleep(0.2)
+                    command.actor.write(
+                        "i",
+                        {
+                            "Position": self.service.getPosition(),
+                            "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
+                            "Velocity": self.service.getVelocity(),
+                            "AtHome": self.service.isAtHome(),
+                            "AtLimit": self.service.isAtLimit(),
+                        }
+                    )
+                await asyncio.sleep(0.2)
 
             except Exception as ex:
                 U9_LOG(ex)
@@ -145,27 +155,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         #self._chat(1, 226, module)
 
         U9_LOG("done")
-       #while True:
-            #try:
-                #position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
-                #U9_LOG(f"field angle {position} deg")
-
-                #command.actor.write(
-                     #"i",
-                     #{
-                        #"Position": self.service.getPosition(),
-                        #"DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                        #"Velocity": self.service.getVelocity(),
-                        #"AtHome": self.service.isAtHome(),
-                        #"AtLimit": self.service.isAtLimit(),
-                     #}
-                #)
-
-            #except Exception as e:
-                 #command.fail(error=e)
-
-            #await asyncio.sleep(delta_time)
-
 
     @command_parser.command("slewStart")
     @click.argument("RA", type=float)
