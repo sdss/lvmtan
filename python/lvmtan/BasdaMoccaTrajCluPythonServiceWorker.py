@@ -50,7 +50,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.geoloc = Site(name = self.site)
 
-        A_LOG(f"site: {self.site}")
+        I_LOG(f"site: {self.site}")
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), **{"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown"}}
