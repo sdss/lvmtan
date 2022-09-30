@@ -13,8 +13,9 @@ import BasdaService
 import Nice
 import numpy as np
 
-from Nice import I_LOG, U9_LOG, A_LOG
+from Nice import I_LOG, U9_LOG, A_LOG, F_LOG
 from .BasdaMoccaXCluPythonServiceWorker import *
+from .exceptions import LvmTanOutOfRange
 
 import asyncio
 import math
@@ -41,8 +42,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.sid = Siderostat()
         self.point = None
         if (
-            self.rootNode.exist("SITE")
-            and self.rootNode.node("SITE").hasLeaf()
+            self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()
         ):
             self.site = self.rootNode.node("SITE").String
         else:
@@ -50,11 +50,14 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.geoloc = Site(name = self.site)
 
-
         I_LOG(f"site: {self.site}")
+        I_LOG(f"simulate: {self.simulate}")
 
     def _status(self, reachable=True):
-        return {**BasdaMoccaXCluPythonServiceWorker._status(self), **{"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown"}}
+        return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
+                **{"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown",
+                   "Simulate": self.simulate}
+               }
 
     async def slewTick(self, command, delta_time):
         while True:
@@ -118,7 +121,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             self.service.moveAbsoluteWait()
 
             if abs(position - self.service.getDeviceEncoderPosition("DEG")) > 1.0:
+<<<<<<< HEAD
                A_LOG(f"diff angle {abs(position - self.service.getDeviceEncoderPosition('DEG')) > 1.0 } deg")
+=======
+>>>>>>> e10f0c31d572aba0f9d23adaacb3039b322826ec
                raise LvmTanOutOfRange()
 
         except Exception as e:
