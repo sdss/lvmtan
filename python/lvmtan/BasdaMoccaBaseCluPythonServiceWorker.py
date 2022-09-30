@@ -6,10 +6,17 @@
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
 
+
+from sys import maxsize
+
 import BasdaMoccaException
 import BasdaMoccaX
 import BasdaService
 import Nice
+from Nice import I_LOG, U9_LOG, A_LOG, F_LOG, W_LOG
+
+import json
+
 import numpy as np
 
 from .BasdaCluPythonServiceWorker import (BasdaCluPythonServiceWorker, Command,
@@ -38,6 +45,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.schema["properties"]["Reachable"] = {"type": "boolean"}
         self.schema["properties"]["CurrentTime"] = {"type": "number"}
         self.schema["properties"]["Simulate"] = {"type": "boolean"}
+        self.schema["properties"]["ChatRc"] = {"type": "array"}
 
 
     def _status(self, reachable=True):
@@ -106,4 +114,50 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
             )
         except Exception as e:
             command.fail(error=e)
+
+
+    async def _chat(self, card: int, com: int, module: int, select: int=maxsize, params: str="", lines: int=maxsize):
+        """Check hardware reachability"""
+        if lines == maxsize: lines = ""
+        if select == maxsize: select = ""
+
+        try:
+            U9_LOG(f"{card} {com} {module} {select} {params} {lines}")
+            self.service.send(str(card),str(com),str(module),str(select),str(params),str(lines))
+            await asyncio.sleep(0.01)
+            rc = self.service.receive().split('\n')
+
+        except ServiceIsBusyException as ex:
+            W_LOG("got busy exception - wait and try again")
+            await asyncio.sleep(0.4)
+            self.service.send(str(card),str(com),str(module),str(select),str(params),str(lines))
+            await asyncio.sleep(0.01)
+            rc = self.service.receive().split('\n')
+
+        if int(rc[-1].split(' ')[3]) < 0:
+            raise Exception(f"Error #{rc[-1]}")
+
+        return rc
+
+
+    @command_parser.command("chat")
+    @click.argument("CARD", type=int)
+    @click.argument("COM", type=int)
+    @click.argument("MODULE", type=int)
+    @click.argument("SELECT", type=int, default=maxsize)
+    @click.argument("PARAMS", type=str, default="")
+    @click.argument("LINES", type=int, default=maxsize)
+    @BasdaCluPythonServiceWorker.wrapper
+    async def chat(self, command: Command, card: int, com: int, module: int, select: int, params: str, lines: int):
+        """Check hardware reachability"""
+        try:
+            rc = await self._chat(card, com, module, select, params, lines)
+            return command.finish(
+                ChatRc = rc
+            )
+
+        except Exception as e:
+            command.fail(error=e)
+
+
 

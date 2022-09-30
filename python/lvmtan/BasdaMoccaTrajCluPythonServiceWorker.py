@@ -14,6 +14,7 @@ import Nice
 import numpy as np
 
 from Nice import I_LOG, U9_LOG, A_LOG, F_LOG
+
 from .BasdaMoccaXCluPythonServiceWorker import *
 from .exceptions import LvmTanOutOfRange
 
@@ -90,10 +91,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     async def slewTickMocon(self, command, delta_time):
 
         try:
+
             # clear buffer
-            km.chat(1, 226, self.device_module)
-        except:
-            pass
+            rc = self._chat(1, 226, self.device_module)
+            N_LOG(rc)
+
+        except Exception as ex:
+            A_LOG(ex)
 
         while True:
             try:
@@ -191,56 +195,3 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         return command.finish(**self._status())
         
-    
-
-    #@command_parser.command("changeProfile")
-    #@click.argument("START_DATE", type=datetime.datetime)
-    ##   @click.argument('POSITIONS', cls=ConvertStrToList, type=list)
-    #@click.argument("POSITIONS", type=list)
-    #@BasdaCluPythonServiceWorker.wrapper
-    #async def changeProfile(self, start_date: datetime.datetime, positions: list):
-        #"""Change active trajectory"""
-        ## U8_LOG("changeProfile %s %s %s" % (start_date, positions, type(self.service)))
-        #try:
-            #self.service.changeProfile(Nice.Date.now(), Nice.NPoint(Nice.NPoint(positions)))
-        #except Exception as e:
-            #command.fail(error=e)
-
-    #@command_parser.command("startProfile")
-    #@click.argument("START_DATE", type=datetime.datetime)
-    #@click.argument("POSITIONS", type=list)
-    #@click.argument("FREQUENCY", type=int)
-    #@click.argument("SAMPLES_PER_SEGMENT", type=int)
-    #@click.argument("MAX_ERROR", type=int)
-    #@BasdaCluPythonServiceWorker.wrapper
-    #async def startProfile(
-        #self,
-        #start_date: datetime.datetime,
-        #positions: list,
-        #frequency: int,
-        #samples_per_segment: int,
-        #max_error: int,
-    #):
-        #"""Start trajectory"""
-        ## U8_LOG("startProfile %s %s %s %s %s" % (start_date, positions, frequency, samples_per_segment, max_error))
-        #try:
-            #self.service.startProfileStart(
-                #Nice.Date.fromUTC(
-                    #start_date.year,
-                    #start_date.month,
-                    #start_date.day,
-                    #start_date.hour,
-                    #start_date.minute,
-                    #start_date.second,
-                    #start_date.microsecond * 1000,
-                #),
-                #Nice.NPoint(Nice.NPoint(positions)),
-                #frequency,
-                #samples_per_segment,
-                #max_error,
-            #)
-            #while not self.service.startProfileCompletion().isDone():
-                #await asyncio.sleep(0.01)
-            #self.service.startProfileWait()
-        #except Exception as e:
-            #command.fail(error=e)
