@@ -51,9 +51,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.geoloc = Site(name = self.site)
 
         I_LOG(f"site: {self.site}")
+        I_LOG(f"simulate: {self.simulate}")
 
     def _status(self, reachable=True):
-        return {**BasdaMoccaXCluPythonServiceWorker._status(self), **{"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown"}}
+        return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
+                **{"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown",
+                   "Simulate": self.simulate}
+               }
 
     async def slewTick(self, command, delta_time):
         while True:

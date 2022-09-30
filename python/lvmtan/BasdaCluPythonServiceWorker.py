@@ -62,6 +62,7 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
         }
         self.unit = "STEPS"
         self.simulate = None
+        self.device_module = None
 
 
     async def connect(self):
@@ -135,6 +136,9 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
 
             self.simulate = self.device.config().node("LOAD").MapStringString["LIB"] == "BasdaMoccaNDeviceDummy"
             I_LOG(f"simulate: {self.simulate}")
+            
+            self.device_module = self.device.config().node("MOD.TRAJ.CFG.CONNECTION.MODULE").Int
+            I_LOG(f"{self.device_module}")
 
         if (
             self.cfgNode.exist("UNIT")
