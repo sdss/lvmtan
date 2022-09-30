@@ -52,7 +52,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.geoloc = Site(name = self.site)
 
         I_LOG(f"site: {self.site}")
-        I_LOG(f"simulate: {self.simulate}")
+
+        self.derot_buffer = 20
+        self.derot_dist = 2
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
@@ -65,10 +67,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             try:
                 position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
                 U9_LOG(f"field angle {position} deg")
-                if self.simulate:
                     self.service.moveAbsolute(position, "DEG")
-                else:
-                    I_LOG(f"move {position}")
 
 
                 command.actor.write(
@@ -90,35 +89,82 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
     async def slewTickMocon(self, command, delta_time):
 
+        def setSegment(km, idx, t0, t1=None):
+            U9_LOG (f"'{idx%cbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}'")
+            self._chat(1, 221, module, 0, f"'{idx%cbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}'")
+            if t1:
+               U9_LOG(f"'{(idx+1)%cbuf} 0 0 {t1[2]} 0 0'")
+               self._chat(1, 221, module, 0, f"'{(idx+1)%cbuf} 0 0 {t1[2]} 0 0'")
+
         try:
 
             # clear buffer
             rc = self._chat(1, 226, self.device_module)
-            N_LOG(rc)
 
         except Exception as ex:
-            A_LOG(ex)
+            pass
 
+        # create buffer
+        rc = self._chat(1, 220, self.device_module, self.derot_buffer)
+
+        now = astropy.time.Time.now()
+        traj = self.sid.mpiaMocon(geoloc, point, None, deltaTime=deltaTime, polyN=self.derot_dist, time=now)
+
+#        km.moveAbsolute(traj[0][3])
+
+        for i in range(dist):
+            setSegment(self, i, traj[i])
+        setSegment(self, i+1, traj[i+1])
+
+        # profile start from beginning
+        self._chat(1, 222, module, 0)
+
+        upidx = self.derot_dist
         while True:
             try:
-                position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
-                U9_LOG(f"field angle {position} deg")
+                moidx = int(json.loads(unpack(km.chat(1, 225, module)))[-1].split(' ')[-1])
+                updistance=((upidx%cbuf)-moidx+cbuf)%cbuf
+                U9_LOG(f"pos: {km.getIncrementalEncoderPosition()} {km.getDeviceEncoderPosition()} updist: {updistance} idx: {upidx}", end = '\n')
+                if updistance < dist:
+                    nowpdt = now + astropy.time.TimeDelta(deltaTime*upidx, format='sec')
+                    U9_LOG(nowpdt)
+                    self.sid.mpiaMocon(geoloc, point, None, deltaTime=deltaTime, polyN=1, time=nowpdt)
+                    setSegment(km, upidx, traj[0], traj[1])
+                    upidx+=1
+                sleep(0.2)
 
-                command.actor.write(
-                     "i",
-                     {
-                        "Position": self.service.getPosition(),
-                        "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                        "Velocity": self.service.getVelocity(),
-                        "AtHome": self.service.isAtHome(),
-                        "AtLimit": self.service.isAtLimit(),
-                     }
-                )
+            except Exception as ex:
+                U9_LOG(ex)
+                break
 
-            except Exception as e:
-                 command.fail(error=e)
 
-            await asyncio.sleep(delta_time)
+        ### profile stop
+        #self._chat(1, 224, module)
+
+        ### clear buffer
+        #self._chat(1, 226, module)
+
+        U9_LOG("done")
+       #while True:
+            #try:
+                #position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
+                #U9_LOG(f"field angle {position} deg")
+
+                #command.actor.write(
+                     #"i",
+                     #{
+                        #"Position": self.service.getPosition(),
+                        #"DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
+                        #"Velocity": self.service.getVelocity(),
+                        #"AtHome": self.service.isAtHome(),
+                        #"AtLimit": self.service.isAtLimit(),
+                     #}
+                #)
+
+            #except Exception as e:
+                 #command.fail(error=e)
+
+            #await asyncio.sleep(delta_time)
 
 
     @command_parser.command("slewStart")
