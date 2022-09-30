@@ -139,7 +139,7 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
             
             nodes=Nice.SeqString()
             self.device.config().node("MOD").children(nodes)
-            self.device_module = nodes[0].node("CFG.CONNECTION.MODULE").Int
+            self.device_module = self.device.config().node(f"MOD.{nodes[0]}.CFG.CONNECTION.MODULE").Int
             I_LOG(f"{self.device_module}")
 
         if (
