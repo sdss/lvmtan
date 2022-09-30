@@ -121,10 +121,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             self.service.moveAbsoluteWait()
 
             if abs(position - self.service.getDeviceEncoderPosition("DEG")) > 1.0:
-<<<<<<< HEAD
                A_LOG(f"diff angle {abs(position - self.service.getDeviceEncoderPosition('DEG')) > 1.0 } deg")
-=======
->>>>>>> e10f0c31d572aba0f9d23adaacb3039b322826ec
                raise LvmTanOutOfRange()
 
         except Exception as e:
