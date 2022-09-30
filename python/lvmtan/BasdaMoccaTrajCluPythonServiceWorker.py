@@ -88,6 +88,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             await asyncio.sleep(delta_time)
 
     async def slewTickMocon(self, command, delta_time):
+
+        try:
+            # clear buffer
+            km.chat(1, 226, self.device_module)
+        except:
+            pass
+
         while True:
             try:
                 position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
