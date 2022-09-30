@@ -13,7 +13,7 @@ import BasdaService
 import Nice
 import numpy as np
 
-from Nice import I_LOG, U9_LOG
+from Nice import I_LOG, U9_LOG, A_LOG
 from .BasdaMoccaXCluPythonServiceWorker import *
 
 import asyncio
@@ -44,7 +44,14 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             self.rootNode.exist("SITE")
             and self.rootNode.node("SITE").hasLeaf()
         ):
-            self.site = self.rootNode.node("SITE").String.toPy()
+            self.site = self.rootNode.node("SITE").String
+        else:
+            self.site = "LCO"
+
+        self.geoloc = Site(name = self.site)
+
+
+        I_LOG(f"site: {self.site}")
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), **{"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown"}}
@@ -76,25 +83,21 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     @click.argument("RA", type=float)
     @click.argument("DEC", type=float)
     @click.argument("DELTA_TIME", type=int, default=1)
-    @click.argument("SITE", type=str, default=self.site)
     @BasdaCluPythonServiceWorker.wrapper
     async def slewStart(
         self,
         command: Command,
         ra: float,
         dec: float,
-        delta_time: int,
-        site: str,
+        delta_time: int
     ):
         """Start slew"""
-        I_LOG(f"start slew now {ra} {dec} {delta_time} {site}")
+        I_LOG(f"start slew now {ra} {dec} {delta_time} {self.site}")
 
         targ = astropy.coordinates.SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg))
 #        I_LOG(astropy.version.version)
 
         self.point = Target(targ)
-
-        self.geoloc = Site(name = site)
 
         # calculate the field angle (in radians)
         try:
