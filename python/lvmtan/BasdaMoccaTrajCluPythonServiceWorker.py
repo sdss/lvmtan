@@ -59,12 +59,17 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                    "Simulate": self.simulate}
                }
 
-    async def slewTick(self, command, delta_time):
+    async def slewTickSimulate(self, command, delta_time):
         while True:
             try:
                 position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
                 U9_LOG(f"field angle {position} deg")
-                self.service.moveAbsolute(position, "DEG")
+                if self.simulate:
+                    self.service.moveAbsolute(position, "DEG")
+                else:
+                    I_LOG(f"move {position}")
+
+
                 command.actor.write(
                      "i", 
                      { 
@@ -73,9 +78,32 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                         "Velocity": self.service.getVelocity(),
                         "AtHome": self.service.isAtHome(),
                         "AtLimit": self.service.isAtLimit(),
+                        "Simulate": self.simulate,
                      }
                 )
                      
+            except Exception as e:
+                 command.fail(error=e)
+
+            await asyncio.sleep(delta_time)
+
+    async def slewTickMocon(self, command, delta_time):
+        while True:
+            try:
+                position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
+                U9_LOG(f"field angle {position} deg")
+
+                command.actor.write(
+                     "i",
+                     {
+                        "Position": self.service.getPosition(),
+                        "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
+                        "Velocity": self.service.getVelocity(),
+                        "AtHome": self.service.isAtHome(),
+                        "AtLimit": self.service.isAtLimit(),
+                     }
+                )
+
             except Exception as e:
                  command.fail(error=e)
 
@@ -131,7 +159,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             loop = asyncio.get_event_loop()
             if self.task:
                 self.task.cancel()
-            self.task = loop.create_task(self.slewTick(command, delta_time))
+            if self.simulate:
+                self.task = loop.create_task(self.slewTickSimulate(command, delta_time))
+            else:
+                self.task = loop.create_task(self.slewTickMocon(command, delta_time))
+
         except Exception as e:
             command.fail(error=e)
 
