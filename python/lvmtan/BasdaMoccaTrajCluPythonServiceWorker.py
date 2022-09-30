@@ -13,7 +13,7 @@ import BasdaService
 import Nice
 import numpy as np
 
-from Nice import I_LOG, U9_LOG, A_LOG
+from Nice import I_LOG, U9_LOG, A_LOG, F_LOG
 from .BasdaMoccaXCluPythonServiceWorker import *
 from .exceptions import LvmTanOutOfRange
 
@@ -42,8 +42,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.sid = Siderostat()
         self.point = None
         if (
-            self.rootNode.exist("SITE")
-            and self.rootNode.node("SITE").hasLeaf()
+            self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()
         ):
             self.site = self.rootNode.node("SITE").String
         else:
@@ -51,8 +50,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.geoloc = Site(name = self.site)
 
-
-        I_LOG(f"site: {self.site}")
+        A_LOG(f"site: {self.site}")
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), **{"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown"}}
