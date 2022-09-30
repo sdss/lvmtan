@@ -7,12 +7,15 @@
 
 
 class LvmTanError(Exception):
-    """A custom core Lvmtan exception"""
+    """Core exception"""
 
 class LvmTanNotImplemented(LvmTanError):
-    """A custom exception for not yet implemented features."""
+    """Not yet implemented features."""
 
 class LvmTanApiAuthError(LvmTanError):
-    """A custom exception for API authentication errors"""
+    """API authentication errors"""
+
+class LvmTanOutOfRange(LvmTanError):
+    """Out of range error"""
 
 

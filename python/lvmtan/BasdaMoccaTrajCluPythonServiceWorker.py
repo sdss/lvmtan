@@ -15,6 +15,7 @@ import numpy as np
 
 from Nice import I_LOG, U9_LOG, A_LOG
 from .BasdaMoccaXCluPythonServiceWorker import *
+from .exceptions import LvmTanOutOfRange
 
 import asyncio
 import math
@@ -116,6 +117,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                     AtLimit=self.service.isAtLimit(),
                 )
             self.service.moveAbsoluteWait()
+
+            if abs(position - self.service.getDeviceEncoderPosition("DEG")) > 1.0:
+               raise LvmTanOutOfRange()
 
         except Exception as e:
             return command.fail(error=e)
