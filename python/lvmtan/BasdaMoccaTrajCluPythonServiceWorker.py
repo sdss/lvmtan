@@ -119,19 +119,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 await setSegment(self, i, traj[i])
             await setSegment(self, i+1, traj[i+1])
 
-            rc = await self._chat(1, 225, self.device_module)
-            moidx = int(rc[0].split(' ')[-1])
-
-            N_LOG(f"{moidx}")
+            N_LOG(f"last segment {i}")
 
             # profile start from beginning
             await self._chat(1, 222, self.device_module, 0)
-            U7_LOG(f"{rc}")
 
-            rc = await self._chat(1, 225, self.device_module)
-            moidx = int(rc[0].split(' ')[-1])
-
-            N_LOG(f"{moidx}")
 
             upidx = self.derot_dist
             while True:
@@ -143,9 +135,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                            f"updist: {updistance} idx: {upidx}")
                     if updistance < self.derot_dist:
                         nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
-                        U7_LOG(nowpdt)
+#                        N_LOG(nowpdt)
                         self.sid.mpiaMocon(self.geoloc, self.point, None, deltaTime=delta_time, polyN=1, time=nowpdt)
-                        setSegment(self, upidx, traj[0], traj[1])
+                        await setSegment(self, upidx, traj[0], traj[1])
                         upidx+=1
                         command.actor.write(
                             "i",
