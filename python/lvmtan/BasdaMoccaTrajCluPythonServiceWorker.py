@@ -91,14 +91,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     async def slewTickMocon(self, command, delta_time):
         
         try:
-            async def setSegment(km, idx, dbuf, module, t0, t1=None):
+            async def setSegment(parent, idx, t0, t1=None):
 #                U7_LOG (f"{idx%dbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}")
-                rc = await self._chat(1, 221, module, 0, f"{idx%dbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}")
-#                U7_LOG(f"{rc}")
+                await parent._chat(1, 221, parent.device_module, 0, f"{idx%parent.derot_buffer} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}")
                 if t1:
 #                    U7_LOG(f"{(idx+1)%dbuf} 0 0 {t1[2]} 0 0")
-                    rc = await self._chat(1, 221, module, 0, f"{(idx+1)%dbuf} 0 0 {t1[2]} 0 0")
-#                    U7_LOG(f"{rc}")
+                     await parent._chat(1, 221, parent.device_module, 0, f"{(idx+1)%parent.derot_buffer} 0 0 {t1[2]} 0 0")
 
             try:
                 # clear buffer
@@ -118,29 +116,35 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     #        km.moveAbsolute(traj[0][3])
 
             for i in range(self.derot_dist):
-                await setSegment(self, i, self.derot_buffer, self.device_module, traj[i])
-            await setSegment(self, i+1, self.derot_buffer, self.device_module, traj[i+1])
+                await setSegment(self, i, traj[i])
+            await setSegment(self, i+1, traj[i+1])
 
-            N_LOG("slewTickMocon")
+            rc = await self._chat(1, 225, self.device_module)
+            moidx = int(rc[0].split(' ')[-1])
+
+            N_LOG(f"{moidx}")
 
             # profile start from beginning
             await self._chat(1, 222, self.device_module, 0)
             U7_LOG(f"{rc}")
 
-            N_LOG("slewTickMocon")
+            rc = await self._chat(1, 225, self.device_module)
+            moidx = int(rc[0].split(' ')[-1])
+
+            N_LOG(f"{moidx}")
 
             upidx = self.derot_dist
             while True:
                 try:
-                    rc = (await self._chat(1, 225, self.device_module)).unpack()
+                    rc = await self._chat(1, 225, self.device_module)
                     moidx = int(rc[0].split(' ')[-1])
                     updistance=((upidx%self.derot_buffer)-moidx+self.derot_buffer)%self.derot_buffer
-                    U7_LOG(f"pos: {km.getIncrementalEncoderPosition()} {km.getDeviceEncoderPosition()} updist: {updistance} idx: {upidx}", end = '\n')
-                    if updistance < dist:
+                    U7_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} updist: {updistance} idx: {upidx}")
+                    if updistance < self.derot_dist:
                         nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
                         U7_LOG(nowpdt)
                         self.sid.mpiaMocon(geoloc, point, None, deltaTime=delta_time, polyN=1, time=nowpdt)
-                        setSegment(km, upidx, traj[0], traj[1])
+                        setSegment(self, upidx, traj[0], traj[1])
                         upidx+=1
                         command.actor.write(
                             "i",
