@@ -54,7 +54,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         I_LOG(f"site: {self.site}")
 
         self.derot_buffer = 20
-        self.derot_dist = 2
+        self.derot_dist = 7
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
