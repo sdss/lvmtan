@@ -13,7 +13,7 @@ import BasdaMoccaException
 import BasdaMoccaX
 import BasdaService
 import Nice
-from Nice import I_LOG, U9_LOG, A_LOG, F_LOG, W_LOG
+from Nice import I_LOG, U9_LOG, A_LOG, F_LOG, W_LOG, U7_LOG
 
 import json
 
@@ -122,15 +122,15 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         if select == maxsize: select = ""
 
         try:
-            U9_LOG(f"{card} {com} {module} {select} {params} {lines}")
-            self.service.send(str(card),str(com),str(module),str(select),str(params),str(lines))
+            self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             await asyncio.sleep(0.01)
             rc = self.service.receive().split('\n')
+            U7_LOG(f" {card} {com} {module} {select} {params} {lines}: {rc}")
 
         except ServiceIsBusyException as ex:
             W_LOG("got busy exception - wait and try again")
             await asyncio.sleep(0.4)
-            self.service.send(str(card),str(com),str(module),str(select),str(params),str(lines))
+            self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             await asyncio.sleep(0.01)
             rc = self.service.receive().split('\n')
 

@@ -13,7 +13,7 @@ import BasdaService
 import Nice
 import numpy as np
 
-from Nice import I_LOG, U9_LOG, A_LOG, F_LOG
+from Nice import I_LOG, N_LOG, U7_LOG, A_LOG, F_LOG, E_LOG
 
 from .BasdaMoccaXCluPythonServiceWorker import *
 from .exceptions import LvmTanOutOfRange
@@ -66,8 +66,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         while True:
             try:
                 position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
-                U9_LOG(f"field angle {position} deg")
-                    self.service.moveAbsolute(position, "DEG")
+                U7_LOG(f"field angle {position} deg")
+                self.service.moveAbsolute(position, "DEG")
 
 
                 command.actor.write(
@@ -87,74 +87,80 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             await asyncio.sleep(delta_time)
 
+
     async def slewTickMocon(self, command, delta_time):
-
-        def setSegment(km, idx, t0, t1=None):
-            U9_LOG (f"'{idx%cbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}'")
-            self._chat(1, 221, module, 0, f"'{idx%cbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}'")
-            if t1:
-               U9_LOG(f"'{(idx+1)%cbuf} 0 0 {t1[2]} 0 0'")
-               self._chat(1, 221, module, 0, f"'{(idx+1)%cbuf} 0 0 {t1[2]} 0 0'")
-
+        
         try:
+            async def setSegment(km, idx, dbuf, module, t0, t1=None):
+#                U7_LOG (f"{idx%dbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}")
+                rc = await self._chat(1, 221, module, 0, f"{idx%dbuf} {t0[0]} {t0[1]} {t0[2]} {t0[3]} {t0[4]}")
+#                U7_LOG(f"{rc}")
+                if t1:
+#                    U7_LOG(f"{(idx+1)%dbuf} 0 0 {t1[2]} 0 0")
+                    rc = await self._chat(1, 221, module, 0, f"{(idx+1)%dbuf} 0 0 {t1[2]} 0 0")
+#                    U7_LOG(f"{rc}")
 
-            # clear buffer
-            rc = self._chat(1, 226, self.device_module)
-
-        except Exception as ex:
-            pass
-
-        # create buffer
-        rc = self._chat(1, 220, self.device_module, self.derot_buffer)
-
-        now = astropy.time.Time.now()
-        traj = self.sid.mpiaMocon(geoloc, point, None, deltaTime=deltaTime, polyN=self.derot_dist, time=now)
-
-#        km.moveAbsolute(traj[0][3])
-
-        for i in range(dist):
-            setSegment(self, i, traj[i])
-        setSegment(self, i+1, traj[i+1])
-
-        # profile start from beginning
-        self._chat(1, 222, module, 0)
-
-        upidx = self.derot_dist
-        while True:
             try:
-                moidx = int(json.loads(unpack(km.chat(1, 225, module)))[-1].split(' ')[-1])
-                updistance=((upidx%cbuf)-moidx+cbuf)%cbuf
-                U9_LOG(f"pos: {km.getIncrementalEncoderPosition()} {km.getDeviceEncoderPosition()} updist: {updistance} idx: {upidx}", end = '\n')
-                if updistance < dist:
-                    nowpdt = now + astropy.time.TimeDelta(deltaTime*upidx, format='sec')
-                    U9_LOG(nowpdt)
-                    self.sid.mpiaMocon(geoloc, point, None, deltaTime=deltaTime, polyN=1, time=nowpdt)
-                    setSegment(km, upidx, traj[0], traj[1])
-                    upidx+=1
-                    command.actor.write(
-                        "i",
-                        {
-                            "Position": self.service.getPosition(),
-                            "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                            "Velocity": self.service.getVelocity(),
-                            "AtHome": self.service.isAtHome(),
-                            "AtLimit": self.service.isAtLimit(),
-                        }
-                    )
-                await asyncio.sleep(0.2)
+                # clear buffer
+                rc = await self._chat(1, 226, self.device_module)
 
             except Exception as ex:
-                U9_LOG(ex)
-                break
+                pass
 
+            # create buffer
+            rc = await self._chat(1, 220, self.device_module, self.derot_buffer)
 
-        ### profile stop
-        #self._chat(1, 224, module)
+            now = astropy.time.Time.now()
+            traj = self.sid.mpiaMocon(self.geoloc, self.point, None, deltaTime=delta_time, polyN=self.derot_dist, time=now)
 
-        ### clear buffer
-        #self._chat(1, 226, module)
+            N_LOG(f"traj {traj}")
 
-        U9_LOG("done")
+    #        km.moveAbsolute(traj[0][3])
+
+            for i in range(self.derot_dist):
+                await setSegment(self, i, self.derot_buffer, self.device_module, traj[i])
+            await setSegment(self, i+1, self.derot_buffer, self.device_module, traj[i+1])
+
+            N_LOG("slewTickMocon")
+
+            # profile start from beginning
+            await self._chat(1, 222, self.device_module, 0)
+            U7_LOG(f"{rc}")
+
+            N_LOG("slewTickMocon")
+
+            upidx = self.derot_dist
+            while True:
+                try:
+                    rc = (await self._chat(1, 225, self.device_module)).unpack()
+                    moidx = int(rc[0].split(' ')[-1])
+                    updistance=((upidx%self.derot_buffer)-moidx+self.derot_buffer)%self.derot_buffer
+                    U7_LOG(f"pos: {km.getIncrementalEncoderPosition()} {km.getDeviceEncoderPosition()} updist: {updistance} idx: {upidx}", end = '\n')
+                    if updistance < dist:
+                        nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
+                        U7_LOG(nowpdt)
+                        self.sid.mpiaMocon(geoloc, point, None, deltaTime=delta_time, polyN=1, time=nowpdt)
+                        setSegment(km, upidx, traj[0], traj[1])
+                        upidx+=1
+                        command.actor.write(
+                            "i",
+                            {
+                                "Position": self.service.getPosition(),
+                                "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
+                                "Velocity": self.service.getVelocity(),
+                                "AtHome": self.service.isAtHome(),
+                                "AtLimit": self.service.isAtLimit(),
+                            }
+                        )
+                    await asyncio.sleep(0.2)
+
+                except Exception as ex:
+                    E_LOG(ex)
+                    break
+
+        except Exception as ex:
+            F_LOG(ex)
+
 
     @command_parser.command("slewStart")
     @click.argument("RA", type=float)
@@ -205,14 +211,18 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             loop = asyncio.get_event_loop()
             if self.task:
                 self.task.cancel()
+
             if self.simulate:
                 self.task = loop.create_task(self.slewTickSimulate(command, delta_time))
             else:
                 self.task = loop.create_task(self.slewTickMocon(command, delta_time))
+#                await self.slewTickMocon(command, delta_time)
+
 
         except Exception as e:
             command.fail(error=e)
 
+        I_LOG(f"done")
         return command.finish(**self._status())
             
             
@@ -227,6 +237,19 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         if self.task:
             self.task.cancel()
             self.task = None
+
+
+        if not self.simulate:
+            ## profile stop
+            rc = await self._chat(1, 224, self.device_module)
+            U7_LOG(f"{rc}")
+
+            ## clear buffer
+            rc = await self._chat(1, 226, self.device_module)
+            U7_LOG(f"{rc}")
+
+        U7_LOG("done")
+
 
         return command.finish(**self._status())
         
