@@ -139,7 +139,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                     rc = await self._chat(1, 225, self.device_module)
                     moidx = int(rc[0].split(' ')[-1])
                     updistance=((upidx%self.derot_buffer)-moidx+self.derot_buffer)%self.derot_buffer
-                    U7_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} updist: {updistance} idx: {upidx}")
+                    U7_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()}" 
+                           f"updist: {updistance} idx: {upidx}")
                     if updistance < self.derot_dist:
                         nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
                         U7_LOG(nowpdt)
