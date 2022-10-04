@@ -46,7 +46,7 @@ if [ $VNC_GEOM ]; then
     fluxbox &
     start_niceui &
     max_niceui &
-    (cd /usr/share/novnc/ && ~/lvmtan/utils/novnc_server &)
+    (cd /usr/share/novnc/ && ~/novnc_server &)
 elif [ ${DISPLAY} ]; then
     start_niceui &
 fi
