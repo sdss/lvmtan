@@ -134,13 +134,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                     updistance=((upidx%self.derot_buffer)-moidx+self.derot_buffer)%self.derot_buffer
                     if updistance < self.derot_dist:
                         nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
-                        N_LOG(f"{nowpdt} {upidx}")
+#                        N_LOG(f"{nowpdt} {upidx}")
                         traj = self.sid.mpiaMocon(self.geoloc, self.point, None, deltaTime=delta_time, homeOffset=0, polyN=1, time=nowpdt)
 
                         await setSegment(self, upidx, traj[0], traj[1])
 
-                        N_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} "
-                              f"updist: {updistance} idx: {upidx}")
+ #                       N_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} "
+ #                             f"updist: {updistance} idx: {upidx}")
 
                         upidx+=1
                         command.actor.write(
