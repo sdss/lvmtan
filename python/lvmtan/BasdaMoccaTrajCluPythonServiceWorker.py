@@ -99,7 +99,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 #                    U7_LOG(f"{(idx+1)%dbuf} 0 0 {t1[2]} 0 0")
                      await parent._chat(1, 221, parent.device_module, 0, f"{(idx+1)%parent.derot_buffer} 0 0 {t1[2]} 0 0")
 
-            self.service.moveRelative(self.backlash, "DEG")
 
             try:
                 # clear buffer
@@ -133,14 +132,16 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                     rc = await self._chat(1, 225, self.device_module)
                     moidx = int(rc[0].split(' ')[-1])
                     updistance=((upidx%self.derot_buffer)-moidx+self.derot_buffer)%self.derot_buffer
-                    U7_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()}" 
-                           f"updist: {updistance} idx: {upidx}")
                     if updistance < self.derot_dist:
                         nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
                         N_LOG(f"{nowpdt} {upidx}")
-                        self.sid.mpiaMocon(self.geoloc, self.point, None, deltaTime=delta_time, homeOffset=0, polyN=1, time=nowpdt)
+                        traj = self.sid.mpiaMocon(self.geoloc, self.point, None, deltaTime=delta_time, homeOffset=0, polyN=1, time=nowpdt)
 
                         await setSegment(self, upidx, traj[0], traj[1])
+
+                        N_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} "
+                              f"updist: {updistance} idx: {upidx}")
+
                         upidx+=1
                         command.actor.write(
                             "i",
@@ -184,10 +185,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         # calculate the field angle (in radians)
         try:
-            position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
-            
+            position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None)) - self.backlash
+
             I_LOG(f"field angle {position} deg")
-            self.service.moveAbsoluteStart(position - self.backlash, "DEG")
+            self.service.moveAbsoluteStart(position, "DEG")
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.1)
                 command.info(
@@ -203,6 +204,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             if abs(position - self.service.getDeviceEncoderPosition("DEG")) > 1.0:
                A_LOG(f"diff angle {abs(position - self.service.getDeviceEncoderPosition('DEG')) > 1.0 } deg")
                raise LvmTanOutOfRange()
+
+            self.service.moveRelative(self.backlash, "DEG")
+
 
         except Exception as e:
             return command.fail(error=e)
