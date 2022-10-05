@@ -135,8 +135,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                            f"updist: {updistance} idx: {upidx}")
                     if updistance < self.derot_dist:
                         nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
-#                        N_LOG(nowpdt)
+                        N_LOG(f"{nowpdt} {upidx}")
                         self.sid.mpiaMocon(self.geoloc, self.point, None, deltaTime=delta_time, homeOffset=0, polyN=1, time=nowpdt)
+
                         await setSegment(self, upidx, traj[0], traj[1])
                         upidx+=1
                         command.actor.write(
