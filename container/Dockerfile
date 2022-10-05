@@ -35,6 +35,7 @@ EXPOSE 40000/tcp
 
 WORKDIR /root
 
+COPY ./container/env-basdard.sh .
 COPY ./container/run-basdard.sh .
 COPY ./container/novnc_server .
 
