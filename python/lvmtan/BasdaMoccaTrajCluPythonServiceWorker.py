@@ -54,7 +54,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         I_LOG(f"site: {self.site}")
 
         self.derot_buffer = 20
-        self.derot_dist = 7
+        self.derot_dist = 3
+        self.backlash = 0.1
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
@@ -98,6 +99,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 #                    U7_LOG(f"{(idx+1)%dbuf} 0 0 {t1[2]} 0 0")
                      await parent._chat(1, 221, parent.device_module, 0, f"{(idx+1)%parent.derot_buffer} 0 0 {t1[2]} 0 0")
 
+            self.service.moveRelative(self.backlash, "DEG")
+
             try:
                 # clear buffer
                 rc = await self._chat(1, 226, self.device_module)
@@ -123,7 +126,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             # profile start from beginning
             await self._chat(1, 222, self.device_module, 0)
-
 
             upidx = self.derot_dist
             while True:
@@ -185,7 +187,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
             
             I_LOG(f"field angle {position} deg")
-            self.service.moveAbsoluteStart(position, "DEG")
+            self.service.moveAbsoluteStart(position - self.backlash, "DEG")
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.1)
                 command.info(
