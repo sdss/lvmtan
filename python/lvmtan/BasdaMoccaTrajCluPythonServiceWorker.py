@@ -111,7 +111,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             now = astropy.time.Time.now()
             traj = self.sid.mpiaMocon(self.geoloc, self.point, None, deltaTime=delta_time, homeOffset=0, polyN=self.derot_dist, time=now)
 
-            N_LOG(f"traj {traj}")
+#            N_LOG(f"traj {traj}")
 
     #        km.moveAbsolute(traj[0][3])
 
@@ -119,7 +119,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 await setSegment(self, i, traj[i])
             await setSegment(self, i+1, traj[i+1])
 
-            N_LOG(f"last segment {i}")
+#            N_LOG(f"last segment {i}")
 
             # profile start from beginning
             await self._chat(1, 222, self.device_module, 0)
@@ -240,11 +240,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         if not self.simulate:
             ## profile stop
             rc = await self._chat(1, 224, self.device_module)
-            U7_LOG(f"{rc}")
 
             ## clear buffer
             rc = await self._chat(1, 226, self.device_module)
-            U7_LOG(f"{rc}")
 
         U7_LOG("done")
 
