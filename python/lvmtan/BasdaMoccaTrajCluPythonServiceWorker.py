@@ -41,7 +41,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.task = None
         self.geoloc = None
         self.sid = Siderostat()
-        self.point = None
+        target = None
         if (
             self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()
         ):
@@ -67,14 +67,48 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                    "Simulate": self.simulate}
                }
 
-    async def slewTickSimulate(self, command, delta_time):
+    def _sid_mpiaMocon(self, target, polyN=1, delta_time=1, time=None):
+        if not time:
+             time = astropy.time.Time.now()
+        traj = self.sid.mpiaMocon(self.geoloc,
+                                  target,
+                                  None,
+                                  deltaTime=delta_time,
+                                  homeIsWest=self.homeIsWest,
+                                  homeOffset=self.homeOffset,
+                                  polyN=polyN,
+                                  time=time)
+
+        U7_LOG(f"{time} {traj}")
+        return traj
+        #return self.sid.mpiaMocon(self.geoloc,
+                                  #target,
+                                  #None,
+                                  #deltaTime=delta_time,
+                                  #homeIsWest = self.homeIsWest,
+                                  #homeOffset = self.homeOffset,
+                                  #polyN=polyN,
+                                  #time=time)
+
+    async def _slewTickSimulate(self, command, target, delta_time):
         while True:
             try:
-                #position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None))
+                #position = math.degrees(self.sid.fieldAngle(self.geoloc, target, None))
                 #U7_LOG(f"field angle {position} deg")
                 #self.service.moveAbsolute(position, "DEG")
 
-                position = self.sid.mpiaMocon(self.geoloc, self.point, None, polyN=1)[0][2] - self.backlashInSteps
+                #now = astropy.time.Time.now()
+                #position = self.sid.mpiaMocon(self.geoloc,
+                                        #target,
+                                        #None,
+                                        #deltaTime=delta_time,
+                                        #homeIsWest=self.homeIsWest,
+                                        #homeOffset=self.homeOffset,
+                                        #polyN=1,
+                                        #time=now)
+                                        
+                position = self._sid_mpiaMocon(target, delta_time=delta_time)[0][2]
+
                 U7_LOG(f"field angle {position} steps")
                 self.service.moveAbsolute(position, "STEPS")
 
@@ -92,12 +126,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 )
                      
             except Exception as e:
+                 E_LOG(f"{e}")
                  command.fail(error=e)
 
             await asyncio.sleep(delta_time)
 
 
-    async def slewTickMocon(self, command, delta_time):
+    async def _slewTickMocon(self, command, target, delta_time):
         
         try:
             async def setSegment(parent, idx, t0, t1=None):
@@ -118,15 +153,17 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             # create buffer
             rc = await self._chat(1, 220, self.device_module, self.derot_buffer)
 
-            now = astropy.time.Time.now()
-            traj = self.sid.mpiaMocon(self.geoloc,
-                                      self.point,
-                                      None,
-                                      deltaTime=delta_time,
-                                      homeIsWest = self.homeIsWest,
-                                      homeOffset=self.homeOffset,
-                                      polyN=self.derot_dist,
-                                      time=now)
+            #now = astropy.time.Time.now()
+            #traj = self.sid.mpiaMocon(self.geoloc,
+                                      #target,
+                                      #None,
+                                      #deltaTime=delta_time,
+                                      #homeIsWest=self.homeIsWest,
+                                      #homeOffset=self.homeOffset,
+                                      #polyN=self.derot_dist,
+                                      #time=now)
+
+            traj = self._sid_mpiaMocon(target, polyN=self.derot_dist, delta_time=delta_time)
 
 #            N_LOG(f"traj {traj}")
 
@@ -148,16 +185,18 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                     moidx = int(rc[0].split(' ')[-1])
                     updistance=((upidx%self.derot_buffer)-moidx+self.derot_buffer)%self.derot_buffer
                     if updistance < self.derot_dist:
-                        nowpdt = now + astropy.time.TimeDelta(delta_time*upidx, format='sec')
+                        nowpdt = now + astropy.time.TimeDelta(delta_time * upidx, format='sec')
 #                        N_LOG(f"{nowpdt} {upidx}")
-                        traj = self.sid.mpiaMocon(self.geoloc,
-                                                  self.point,
-                                                  None,
-                                                  deltaTime=delta_time,
-                                                  homeIsWest = self.homeIsWest,
-                                                  homeOffset=self.homeOffset,
-                                                  polyN=1,
-                                                  time=nowpdt)
+                        #traj = self.sid.mpiaMocon(self.geoloc,
+                                                  #target,
+                                                  #None,
+                                                  #deltaTime=delta_time,
+                                                  #homeIsWest = self.homeIsWest,
+                                                  #homeOffset=self.homeOffset,
+                                                  #polyN=1,
+                                                  #time=nowpdt)
+
+                        traj = self._sid_mpiaMocon(target, time=nowpdt)
 
                         await setSegment(self, upidx, traj[0], traj[1])
 
@@ -203,22 +242,24 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         targ = astropy.coordinates.SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg))
 #        I_LOG(astropy.version.version)
 
-        self.point = Target(targ)
+        target = Target(targ)
 
         # calculate the field angle (in radians)
         try:
-#            position = math.degrees(self.sid.fieldAngle(self.geoloc, self.point, None)) - self.backlashInSteps
-            position = self.sid.mpiaMocon(self.geoloc,
-                                          self.point,
-                                          None,
-                                          homeIsWest = self.homeIsWest,
-                                          homeOffset = self.homeOffset,
-                                          polyN=1)[0][2] - self.backlashInSteps
+#            position = math.degrees(self.sid.fieldAngle(self.geoloc, target, None)) - self.backlashInSteps
+            #position = self.sid.mpiaMocon(self.geoloc,
+                                          #target,
+                                          #None,
+                                          #homeIsWest = self.homeIsWest,
+                                          #homeOffset = self.homeOffset,
+                                          #polyN=1)[0][2] - self.backlashInSteps
+            position = self._sid_mpiaMocon(target)[0][2] - self.backlashInSteps
 
 
             I_LOG(f"field angle {position} steps")
 #            self.service.moveAbsoluteStart(position, "DEG")
             self.service.moveAbsoluteStart(position, "STEPS")
+
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.1)
                 command.info(
@@ -252,10 +293,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 self.task.cancel()
 
             if self.simulate:
-                self.task = loop.create_task(self.slewTickSimulate(command, delta_time))
+                self.task = loop.create_task(self._slewTickSimulate(command, target, delta_time))
             else:
-                self.task = loop.create_task(self.slewTickMocon(command, delta_time))
-#                await self.slewTickMocon(command, delta_time)
+                self.task = loop.create_task(self._slewTickMocon(command, target, delta_time))
 
 
         except Exception as e:
