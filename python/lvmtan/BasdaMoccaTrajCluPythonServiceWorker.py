@@ -153,7 +153,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             # create buffer
             rc = await self._chat(1, 220, self.device_module, self.derot_buffer)
 
-            #now = astropy.time.Time.now()
+            now = astropy.time.Time.now()
             #traj = self.sid.mpiaMocon(self.geoloc,
                                       #target,
                                       #None,
