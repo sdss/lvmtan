@@ -40,7 +40,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         BasdaMoccaXCluPythonServiceWorker.__init__(self, _svcName)
         self.task = None
         self.geoloc = None
-        self.sid = Siderostat(azang=180.0)
+        self.sid = Siderostat(azang=180.0, medSign=1)
         target = None
         if (
             self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()
