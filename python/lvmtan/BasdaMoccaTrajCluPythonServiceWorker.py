@@ -40,7 +40,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         BasdaMoccaXCluPythonServiceWorker.__init__(self, _svcName)
         self.task = None
         self.geoloc = None
-        self.sid = Siderostat(azang=180.0, medSign=1)
+        
+        azang = 180.0
+        medSign = 1
+
+        self.sid = Siderostat(azang=azang, medSign=medSign)
         target = None
         if (
             self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()
@@ -51,14 +55,16 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.geoloc = Site(name = self.site)
 
-        I_LOG(f"site: {self.site}")
-
         self.derot_buffer = 100
         self.derot_dist = 7
 #        self.backlashInSteps = 0.1
         self.backlashInSteps = 1000
         self.homeOffset = 135.0
         self.homeIsWest = False
+
+        I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
+
+
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
