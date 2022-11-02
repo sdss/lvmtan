@@ -46,6 +46,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.schema["properties"]["CurrentTime"] = {"type": "number"}
         self.schema["properties"]["Simulate"] = {"type": "boolean"}
         self.schema["properties"]["ChatRc"] = {"type": "array"}
+        self.schema["properties"]["Site"] = {"type": "string"}
 
 
     def _status(self, reachable=True):
