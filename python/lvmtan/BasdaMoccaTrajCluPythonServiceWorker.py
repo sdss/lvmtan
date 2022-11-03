@@ -45,7 +45,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.geoloc = None
         
         azang = 180.0
-        medSign = 1
+        medSign = -1
 
         self.sid = Siderostat(azang=azang, medSign=medSign)
         target = None
