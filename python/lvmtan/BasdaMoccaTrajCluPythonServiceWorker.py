@@ -41,12 +41,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.schema["properties"]["SkyPA"] = {"type": "number"}
 
-
         self.task = None
         self.geoloc = None
         
         azang = 180.0
-        medSign = 1
+        medSign = -1
 
         self.sid = Siderostat(azang=azang, medSign=medSign)
         target = None
@@ -66,8 +65,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.homeIsWest = False
 
         I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
-
-
 
     def _status(self, reachable=True):
         return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
@@ -98,7 +95,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
                 U8_LOG(f"field angle {position} steps")
                 self.service.moveAbsolute(position, "STEPS")
-
 
                 command.actor.write(
                      "i", 

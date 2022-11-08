@@ -9,6 +9,8 @@
 
 from sys import maxsize
 
+from Basda import ServiceIsBusyException
+
 import BasdaMoccaException
 import BasdaMoccaX
 import BasdaService
@@ -124,7 +126,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 
         try:
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.02)
             rc = self.service.receive().split('\n')
             U7_LOG(f" {card} {com} {module} {select} {params} {lines}: {rc}")
 
@@ -134,6 +136,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             await asyncio.sleep(0.01)
             rc = self.service.receive().split('\n')
+            U7_LOG(f"+ {card} {com} {module} {select} {params} {lines}: {rc}")
 
         if int(rc[-1].split(' ')[3]) < 0:
             raise Exception(f"Error #{rc[-1]}")
