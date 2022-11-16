@@ -47,16 +47,23 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         azang = 180.0
         medSign = -1
 
-        self.sid = Siderostat(azang=azang, medSign=medSign)
         target = None
-        if (
-            self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()
-        ):
+        if (self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()):
             self.site = self.rootNode.node("SITE").String
         else:
             self.site = "LCO"
 
         self.geoloc = Site(name = self.site)
+
+        # but south-> north at LCO
+        if self.geoloc.lat > 40.0:
+            azang = 180 # MPIA
+        else:
+            azang = 0  # LCO, APO, KHU
+
+        medSign = -1
+
+        self.sid = Siderostat(azang=azang, medSign=medSign)
 
         self.derot_buffer = 100
         self.derot_dist = 7
