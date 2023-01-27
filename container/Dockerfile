@@ -7,16 +7,27 @@ MAINTAINER Florian Briegel, briegel@mpia.de
 
 # podman run -ti --rm --name lvm_tan -e DISPLAY --network=host --ipc=host --device /dev/dri -v ~/.Xauthority:/root/.Xauthority:Z -v .:/root/lvmt:Z -P localhost/ubuntu_lvm_tan
 
+
+RUN apt-get update
+#RUN apt-get install -y locales locales-all
+#ENV LC_ALL en_US.UTF-8
+#ENV LANG en_US.UTF-8
+#ENV LANGUAGE en_US.UTF-8
+
+RUN apt-get install -y locales
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+ENV DEBIAN_FRONTEND noninteractive
+
 RUN apt update -y && \
     apt install -y wget && \
-    echo "8\n7\n" | apt install -y software-properties-common && \
-    echo "30\n1\n" | apt install -y keyboard-configuration && \
+    DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common keyboard-configuration && \ 
     wget -qO - https://zeroc.com/download/GPG-KEY-zeroc-release-B6391CB2CFBA643D | apt-key add - && \
     apt-add-repository "deb http://zeroc.com/download/ice/3.7/ubuntu20.04 stable main" && \
     wget -qO - https://svn.mpia.de/repo/linux/ubuntu/archive.key | apt-key add - && \
     echo "deb https://svn.mpia.de/repo/linux/ubuntu focal main" > /etc/apt/sources.list.d/mpia.list
 
-RUN apt update -y
 RUN apt install -y sudo subversion git lsof
 
 RUN apt update -y
