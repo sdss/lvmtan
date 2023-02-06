@@ -44,9 +44,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.task = None
         self.geoloc = None
         
-        azang = 180.0
-        medSign = -1
-
         target = None
         if (self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()):
             self.site = self.rootNode.node("SITE").String
