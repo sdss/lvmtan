@@ -9,6 +9,7 @@ import asyncio
 
 from sys import maxsize
 import time
+from random import random
 
 from Basda import ServiceIsBusyException
 
@@ -53,7 +54,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 
 
     def _status(self, reachable=True):
-        for i in range(3):
+        for i in range(7):
             try:
                 return {
                     "Reachable": reachable,
@@ -65,7 +66,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                     "Velocity": self.service.getVelocity() if reachable else "Unknown",
                 }
             except Exception as e:
-                time.sleep(0.01)
+                time.sleep(random()/42)
 
 
     @command_parser.command("status")
