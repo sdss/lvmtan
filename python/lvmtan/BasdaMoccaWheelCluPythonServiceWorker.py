@@ -37,7 +37,7 @@ class BasdaMoccaWheelCluPythonServiceWorker(BasdaMoccaCluPythonServiceWorker):
                     AtLimit=self.service.isAtLimit(),
                 )
             self.service.scanAllReferenceSwitchesWait()
-            return command.finish(**self._status())
+            return command.finish(** await self._status(self.service.isReachable()))
 
         except Exception as e:
             command.fail(error=e)
