@@ -5,7 +5,7 @@
 # @Filename: BasdaMoccaBaseCluPythonServiceWorker.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
-
+import asyncio
 
 from sys import maxsize
 
@@ -51,16 +51,20 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.schema["properties"]["Site"] = {"type": "string"}
 
 
-    def _status(self, reachable=True):
-        return {
-            "Reachable": reachable,
-            "AtHome": self.service.isAtHome() if reachable else "Unknown",
-            "Moving": self.service.isMoving() if reachable else "Unknown",
-            "PositionSwitchStatus": self.service.getPositionSwitchStatus()[0].getValue() if reachable else "Unknown",
-            "Position": self.service.getPosition() if reachable else "Unknown",
-            "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown", "Unit": "STEPS"},
-            "Velocity": self.service.getVelocity() if reachable else "Unknown",
-        }
+    async def _status(self, reachable=True):
+        for i in range(3):
+            try:
+                return {
+                    "Reachable": reachable,
+                    "AtHome": self.service.isAtHome() if reachable else "Unknown",
+                    "Moving": self.service.isMoving() if reachable else "Unknown",
+                    "PositionSwitchStatus": self.service.getPositionSwitchStatus()[0].getValue() if reachable else "Unknown",
+                    "Position": self.service.getPosition() if reachable else "Unknown",
+                    "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown", "Unit": "STEPS"},
+                    "Velocity": self.service.getVelocity() if reachable else "Unknown",
+                }
+            except Exception as e:
+                await asyncio.sleep(0.02)
 
 
     @command_parser.command("status")
@@ -68,7 +72,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
     async def status(self, command: Command):
         """Check status"""
         try:
-            return command.finish( **self._status(self.service.isReachable()) )
+            return command.finish( ** await self._status(self.service.isReachable()) )
         except Exception as e:
             command.fail(error=e)
 
