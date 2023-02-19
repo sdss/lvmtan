@@ -8,6 +8,7 @@
 import asyncio
 
 from sys import maxsize
+import time
 
 from Basda import ServiceIsBusyException
 
@@ -51,7 +52,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.schema["properties"]["Site"] = {"type": "string"}
 
 
-    async def _status(self, reachable=True):
+    def _status(self, reachable=True):
         for i in range(3):
             try:
                 return {
@@ -64,7 +65,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                     "Velocity": self.service.getVelocity() if reachable else "Unknown",
                 }
             except Exception as e:
-                await asyncio.sleep(0.02)
+                time.sleep(0.01)
 
 
     @command_parser.command("status")
@@ -72,7 +73,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
     async def status(self, command: Command):
         """Check status"""
         try:
-            return command.finish( ** (await self._status(self.service.isReachable())) )
+            return command.finish( **self._status(self.service.isReachable()) )
 
         except Exception as e:
             command.fail(error=e)
