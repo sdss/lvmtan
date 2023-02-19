@@ -72,7 +72,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
     async def status(self, command: Command):
         """Check status"""
         try:
-            return command.finish( ** await self._status(self.service.isReachable()) )
+            return command.finish( ** (await self._status(self.service.isReachable())) )
 
         except Exception as e:
             command.fail(error=e)

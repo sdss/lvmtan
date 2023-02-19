@@ -150,7 +150,7 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
                 )
             self.service.moveRelativeWait()
 
-            return command.finish(** await self._status(self.service.isReachable()))
+            return command.finish(** (await self._status(self.service.isReachable())))
 
         except Exception as e:
             command.fail(error=e)
@@ -173,7 +173,7 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
                 )
             self.service.moveAbsoluteWait()
 
-            return command.finish(** await self._status(self.service.isReachable()))
+            return command.finish(** (await self._status(self.service.isReachable())))
 
         except Exception as e:
             command.fail(error=e)
@@ -195,7 +195,7 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
                 )
             self.service.moveToHomeWait()
 
-            return command.finish(** await self._status(self.service.isReachable()))
+            return command.finish(** (await self._status(self.service.isReachable())))
 
         except Exception as e:
             command.fail(error=e)
@@ -220,7 +220,7 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
 
             self.service.moveToNamedPositionWait()
 
-            return command.finish(** await self._status(self.service.isReachable()))
+            return command.finish(** (await self._status(self.service.isReachable())))
 
         except Exception as e:
             command.fail(error=e)

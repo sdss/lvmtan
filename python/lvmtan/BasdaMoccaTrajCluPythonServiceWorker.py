@@ -282,7 +282,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             command.fail(error=e)
 
         I_LOG(f"done")
-        return command.finish(** await self._status(self.service.isReachable()))
+        return command.finish(** (await self._status(self.service.isReachable())))
             
             
 
@@ -298,5 +298,5 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         U8_LOG("done")
 
-        return command.finish(** await self._status(self.service.isReachable()))
+        return command.finish(** (await self._status(self.service.isReachable())))
         
