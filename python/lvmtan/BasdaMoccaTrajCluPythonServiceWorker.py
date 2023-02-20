@@ -41,6 +41,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.schema["properties"]["SkyPA"] = {"type": "number"}
 
+        self.task = None
+
         target = None
         if (self.rootNode.exist("SITE") and self.rootNode.node("SITE").hasLeaf()):
             self.site = self.rootNode.node("SITE").String
