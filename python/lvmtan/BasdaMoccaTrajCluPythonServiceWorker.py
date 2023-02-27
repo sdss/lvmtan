@@ -59,12 +59,17 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         medSign = -1
 
+        if (self.cfgNode.exist("HOME_OFFSET") and self.cfgNode.node("HOME_OFFSET").hasLeaf()):
+            self.homeOffset = self.cfgNode.node("HOME_OFFSET").String
+        else:
+            self.homeOffset = 135.0
+
+
         self.sid = Siderostat(azang=azang, medSign=medSign)
 
         self.derot_buffer = 100
         self.derot_dist = 7
         self.backlashInSteps = 1000
-        self.homeOffset = 135.0
         self.homeIsWest = False
 
         I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
