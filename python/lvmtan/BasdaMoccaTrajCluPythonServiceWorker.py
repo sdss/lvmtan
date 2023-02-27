@@ -60,7 +60,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         medSign = -1
 
         if (self.cfgNode.exist("HOME_OFFSET") and self.cfgNode.node("HOME_OFFSET").hasLeaf()):
-            self.homeOffset = self.cfgNode.node("HOME_OFFSET").String
+            self.homeOffset = self.cfgNode.node("HOME_OFFSET").Float
         else:
             self.homeOffset = 135.0
 
