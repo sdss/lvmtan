@@ -39,8 +39,7 @@ RUN apt install -y packagekit-gtk3-module python3-opencv tan-basda-mocca
 RUN cd /root && \
     git clone https://github.com/sdss/lvmtan.git && \
     (cd lvmtan && python3 setup.py install || echo "fix me") && \
-    cp lvmtan/container/run-basdard.sh . && \
-    rm -rf lvmtan
+    cp lvmtan/container/run-basdard.sh .
 
 # For now clone lvmtipo from main and overwrite.
 RUN cd /root && git clone https://github.com/sdss/lvmtipo && \
