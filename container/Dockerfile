@@ -22,11 +22,11 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt update -y && \
     apt install -y wget && \
-    DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common keyboard-configuration && \ 
+    DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common keyboard-configuration && \
     wget -qO - https://zeroc.com/download/GPG-KEY-zeroc-release-B6391CB2CFBA643D | apt-key add - && \
     apt-add-repository "deb http://zeroc.com/download/ice/3.7/ubuntu20.04 stable main" && \
     wget -qO - https://svn.mpia.de/repo/linux/ubuntu/archive.key | apt-key add - && \
-    echo "deb https://svn.mpia.de/repo/linux/ubuntu focal main" > /etc/apt/sources.list.d/mpia.list
+    echo "deb [trusted=yes] https://svn.mpia.de/repo/linux/ubuntu focal main" > /etc/apt/sources.list.d/mpia.list
 
 RUN apt install -y sudo subversion git lsof
 
@@ -41,6 +41,10 @@ RUN cd /root && \
     (cd lvmtan && python3 setup.py install || echo "fix me") && \
     cp lvmtan/container/run-basdard.sh . && \
     rm -rf lvmtan
+
+# For now clone lvmtipo from main and overwrite.
+RUN cd /root && git clone https://github.com/sdss/lvmtipo && \
+    cd lvmtipo && pip3 install . && cd .. && rm -Rf lmvtipo
 
 EXPOSE 40000/tcp
 
