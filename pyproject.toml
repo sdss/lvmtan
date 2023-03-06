@@ -20,7 +20,7 @@ classifiers = [
 packages = [
     { include = "lvmtan", from = "python" }
 ]
-include = ["setup.py", "python/lvmtan/etc/*", "config/*", "container/*", "tests/*"]
+include = ["python/lvmtan/config/*", "python/lvmtan/config/*/*", "python/lvmtan/config/*/*/*"]
 
 [tool.poetry.build]
 script = "build.py"
@@ -37,7 +37,7 @@ python = ">=3.7, <4"
 sdsstools = ">=0.4.0"
 sdss-clu = ">1.0"
 black = "^21.8b0"
-sdss-lvmtipo = ">=0.0.6"
+sdss-lvmtipo = ">=0.0.34"
 
 [tool.poetry.dev-dependencies]
 flake8 = ">=3.7.9"
