@@ -38,9 +38,9 @@ RUN apt update -y && \
     wget -qO - https://svn.mpia.de/repo/linux/ubuntu/archive.key | apt-key add - && \
     echo "deb [ allow-insecure=yes ] https://svn.mpia.de/repo/linux/ubuntu focal main" > /etc/apt/sources.list.d/mpia.list
 
-RUN apt-get update -y
+RUN apt update -y
 
-RUN apt install -y tan-basda-mocca
+RUN apt-get install -y --allow-unauthenticated tan-basda-mocca
 
 #RUN cd /root && \
 #    git clone https://github.com/sdss/lvmtan.git && \
