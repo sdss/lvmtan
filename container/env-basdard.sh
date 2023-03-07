@@ -12,7 +12,7 @@ else
     LVM_TAN_CONFIG_PATH=/usr/local/lib/python3.8/dist-packages/lvmtan/python/lvmtan/config/
 fi
 
-INSROOT_ETC_PATH=${LVM_TAN_CONFIG_PATH}:{$INSROOT_ETC_PATH}
+INSROOT_ETC_PATH=${LVM_TAN_CONFIG_PATH}:${INSROOT_ETC_PATH}
 QT_PLUGIN_PATH=${LVM_TAN_CONFIG_PATH}:${QT_PLUGIN_PATH}
 
 if [ ${LVM_RMQ} ]; then
