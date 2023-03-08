@@ -214,11 +214,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 ## profile stop
                 rc = await self._chat(1, 224, self.device_module)
 
+            while self.service.isMoving():
+                await asyncio.sleep(0.03)
+
+            if not self.simulate:
                 ## clear buffer
                 rc = await self._chat(1, 226, self.device_module)
-
-            while self.service.isMoving():
-                await asyncio.sleep(0.02)
 
             self.task = None
 
