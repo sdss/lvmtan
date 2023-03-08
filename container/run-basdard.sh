@@ -3,7 +3,7 @@
 . /root/env-basdard.sh
 
 start_niceui() {
-   sleep 0.3 && niceQUI --XXX.CONFIG:Endpoint=${BASDARD_ADAPTER}${BASDARD_UI} --LOGGER.LEVEL=INFO
+   sleep 1.2 && niceQUI --XXX.CONFIG:Endpoint=${BASDARD_ADAPTER}${BASDARD_UI} --LOGGER.LEVEL=INFO
 }
 
 max_niceui() {
