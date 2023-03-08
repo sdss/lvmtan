@@ -32,7 +32,7 @@ RUN apt update -y
 RUN apt install -y python3-setuptools python3-pip python3-toml \
         git tightvncserver fluxbox wmctrl novnc
 
-RUN apt install -y packagekit-gtk3-module python3-opencv
+#RUN apt install -y packagekit-gtk3-module python3-opencv
 
 RUN apt update -y && \
     wget -qO - https://svn.mpia.de/repo/linux/ubuntu/archive.key | apt-key add - && \
@@ -41,14 +41,9 @@ RUN apt update -y && \
 RUN apt update -y
 
 RUN apt-get install -y --allow-unauthenticated tan-basda-mocca
+RUN dpkg --purge --force-all python3-astropy
 
-#RUN cd /root && \
-#    git clone https://github.com/sdss/lvmtan.git && \
-#    (cd lvmtan && python3 setup.py install || echo "fix me") && \
-#    cp lvmtan/container/run-basdard.sh . && \
-#    rm -rf lvmtan
-
-RUN pip3 install numpy astropy sdss-clu sdss-lvmtan
+RUN pip3 install sdss-clu sdss-lvmtan
 
 EXPOSE 40000/tcp
 

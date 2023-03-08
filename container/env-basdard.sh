@@ -20,7 +20,7 @@ QT_PLUGIN_PATH=${LVM_TAN_CONFIG_PATH}:${QT_PLUGIN_PATH}
 if [ ${LVM_RMQ} ]; then
      RMQ_CONNECTION="[user=guest,password=guest,host=${LVM_RMQ},port=5672]"
 else
-     test -n "${RMQ_CONNECTION}" && {RMQ_CONNECTION0="[user=guest,password=guest,host=localhost,port=5672]"
+     test -n "${RMQ_CONNECTION}" && {RMQ_CONNECTION="[user=guest,password=guest,host=localhost,port=5672]"
 fi
 
 
