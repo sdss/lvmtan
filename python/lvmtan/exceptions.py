@@ -18,4 +18,6 @@ class LvmTanApiAuthError(LvmTanError):
 class LvmTanOutOfRange(LvmTanError):
     """Out of range error"""
 
+class LvmTanMotorIsStillMoving(LvmTanError):
+    """Motor is still in movement"""
 

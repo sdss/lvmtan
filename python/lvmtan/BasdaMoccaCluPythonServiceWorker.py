@@ -16,8 +16,8 @@ import traceback
 import sys
 import json
 
+from .exceptions import LvmTanMotorIsStillMoving
 from .BasdaMoccaBaseCluPythonServiceWorker import *
-
 
 class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
     "python clu worker"
@@ -140,6 +140,8 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
         """Move relative with unit"""
         unit = unit if len(unit) else self.unit
         try:
+            if self.service.isMoving():
+                raise LvmTanMotorIsStillMoving()
             self.service.moveRelativeStart(position, unit)
             while not self.service.moveRelativeCompletion().isDone():
                 await asyncio.sleep(0.1)
@@ -163,6 +165,8 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
         """Move to absolute position with unit"""
         unit = unit if len(unit) else self.unit
         try:
+            if self.service.isMoving():
+                raise LvmTanMotorIsStillMoving()
             self.service.moveAbsoluteStart(position, unit)
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.1)
@@ -185,6 +189,8 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
         """Move to home position"""
         unit = unit if len(unit) else self.unit
         try:
+            if self.service.isMoving():
+                raise LvmTanMotorIsStillMoving()
             self.service.moveToHomeStart()
             while not self.service.moveToHomeCompletion().isDone():
                 await asyncio.sleep(0.1)
@@ -207,6 +213,8 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
         """Move to named position"""
         unit = unit if len(unit) else self.unit
         try:
+            if self.service.isMoving():
+                raise LvmTanMotorIsStillMoving()
             self.service.moveToNamedPositionStart(namedposition)
             while not self.service.moveToNamedPositionCompletion().isDone():
                 await asyncio.sleep(0.1)
