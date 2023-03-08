@@ -40,6 +40,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         BasdaMoccaXCluPythonServiceWorker.__init__(self, _svcName)
 
         self.schema["properties"]["SkyPA"] = {"type": "number"}
+        self.schema["properties"]["LostSteps"] = {"type": "number"}
 
         self.task = None
 
@@ -248,9 +249,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             target = Target(targ)
 
-            # calculate the field angle (in radians)
             position = self._sid_mpiaMocon(target)[0][2] - self.backlashInSteps
-
 
             I_LOG(f"field angle {position} steps")
             self.service.moveAbsoluteStart(position, "STEPS")
@@ -267,11 +266,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 )
             self.service.moveAbsoluteWait()
 
-            if abs(position - self.service.getDeviceEncoderPosition("STEPS")) > 1000:
-               A_LOG(f"diff angle {abs(position - self.service.getDeviceEncoderPosition('STEPS')) > 1.0 } steps")
-               raise LvmTanOutOfRange()
-
             self.service.moveRelative(self.backlashInSteps, "STEPS")
+
+            position_error = position - self.service.getDeviceEncoderPosition("STEPS")
+            if abs(position_error) > 0:
+                A_LOG(f"position error {position_error} steps")
+                command.warning(LostSteps=position_error)
+#                raise LvmTanOutOfRange()
 
 
         except Exception as e:
