@@ -21,7 +21,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          name: lvmcam ${{ github.ref_name }}
+          name: lvmtan ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
