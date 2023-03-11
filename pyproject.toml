@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sdss-lvmtan"
-version = "0.0.39"
+version = "0.2.0"
 description = "Lvm Tan Clu Wrapper"
 authors = ["Florian Briegel <briegel@mpia.de>"]
 license = "BSD-3-Clause"
@@ -35,8 +35,7 @@ container_isRunning ="container:isRunning"
 [tool.poetry.dependencies]
 python = ">=3.8, <4"
 sdsstools = ">=0.4.0"
-sdss-clu = ">1.0"
-black = "^21.8b0"
+sdss-clu = ">=2.0.0"
 sdss-lvmtipo = ">=0.0.36"
 
 [tool.poetry.dev-dependencies]
