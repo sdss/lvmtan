@@ -5,32 +5,30 @@
 # @Filename: BasdaMoccaTrajCluPythonServiceWorker.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
+import asyncio
 import datetime
+import math
 
+import astropy.coordinates
+import astropy.time
+import astropy.units as u
 import BasdaMoccaException
 import BasdaMoccaTraj
 import BasdaService
 import Nice
+import numpy
 import numpy as np
-
-from Nice import I_LOG, N_LOG, U8_LOG, A_LOG, F_LOG, E_LOG
+from astropy.utils import iers
+from lvmtipo.fiber import Fiber
+from lvmtipo.siderostat import Siderostat
+from lvmtipo.site import Site
+from lvmtipo.target import Target
+from Nice import A_LOG, E_LOG, F_LOG, I_LOG, N_LOG, U8_LOG
 
 from .BasdaMoccaXCluPythonServiceWorker import *
 from .exceptions import LvmTanOutOfRange
 
-import asyncio
-import math
-import numpy
-import astropy.coordinates
-import astropy.time
-import astropy.units as u
 
-from lvmtipo.site import Site
-from lvmtipo.siderostat import Siderostat
-from lvmtipo.fiber import Fiber
-from lvmtipo.target import Target
-
-from astropy.utils import iers
 iers.conf.auto_download = False
 
 class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
@@ -76,7 +74,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
 
     def _status(self, reachable=True):
-        return {**BasdaMoccaXCluPythonServiceWorker._status(self), 
+        return {**BasdaMoccaXCluPythonServiceWorker._status(self),
                 "CurrentTime": self.service.getCurrentTime() if reachable else "Unknown",
                 "Simulate": self.simulate,
                 "SkyPA": self.service.getDeviceEncoderPosition("SKY"),
@@ -106,8 +104,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 self.service.moveAbsolute(position, "STEPS")
 
                 command.actor.write(
-                     "i", 
-                     { 
+                     "i",
+                     {
                         "Position": self.service.getPosition(),
                         "SkyPA": self.service.getDeviceEncoderPosition("SKY"),
                         "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
@@ -117,7 +115,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                         "Simulate": self.simulate,
                      }
                 )
-                     
+
             except Exception as e:
                  E_LOG(f"{e}")
                  command.fail(error=e)
@@ -126,7 +124,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
 
     async def _slewTickMocon(self, command, target, delta_time):
-        
+
         try:
             async def setSegment(parent, idx, t0, t1=None):
                 cmd = f"{idx%parent.derot_buffer} {t0[0]} {t0[1]} {t0[2]}"
@@ -188,7 +186,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                                 "Velocity": self.service.getVelocity(),
                                 "AtHome": self.service.isAtHome(),
                                 "AtLimit": self.service.isAtLimit(),
-                            }
+                            },
+                            internal=True
                         )
                     await asyncio.sleep(0.3)
 
@@ -292,8 +291,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         I_LOG(f"done")
         return command.finish(**self._status(self.service.isReachable()))
-            
-            
+
+
 
     @command_parser.command("slewStop")
     @BasdaCluPythonServiceWorker.wrapper
@@ -308,4 +307,3 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         U8_LOG("done")
 
         return command.finish(**self._status(self.service.isReachable()))
-        
