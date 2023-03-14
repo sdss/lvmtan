@@ -1,29 +1,28 @@
 #!/usr/bin/bash -l
 
+PYTHON=/usr/bin/python3
+
 BASDARD_NAME=`basename ${BASDARD_CONFIG##*/} .conf`
 test -n "$BASDARD_PORT" || BASDARD_PORT=`shuf -i 2000-65000 -n 1`
 BASDARD_ADAPTER="[NAME=$BASDARD_NAME,PORT=$BASDARD_PORT]"
 
-
 LVM_ROOT=$HOME
-LVM_TAN_PATH=$(ls -1 -d ${LVM_ROOT}/lvm/lvmtan ${LVM_ROOT}/lvmtan 2> /dev/null)
-
-echo $LVM_TAN_PATH
-
-PATH=$LVM_TAN_PATH/scripts:$PATH
-
-if [ $LVM_RMQ ]; then 
-     RMQ_CONNECTION="[user=guest,password=guest,host=$LVM_RMQ,port=5672]"
+if [ ${LVM_DEBUG} ]; then
+    LVM_TAN_CONFIG_PATH=${LVM_ROOT}/lvm/lvmtan/python/lvmtan/config/
+    PYTHONPATH=$(ls -1 -d ${LVM_ROOT}/lvm/*/python 2>/dev/null | tr "\n" ":"):$PYTHONPATH
 else
-     test -n "$RMQ_CONNECTION" && RMQ_CONNECTION="[user=guest,password=guest,host=localhost,port=5672]"
+    LVM_TAN_CONFIG_PATH=$(${PYTHON} -c "import lvmtan as _; print(_.__path__[0])")/config
 fi
 
-INSROOT_ETC_PATH=$LVM_TAN_PATH/config:$INSROOT_ETC_PATH
-echo $LVM_DEBUG
-if [ $LVM_DEBUG ]; then 
-    PYTHONPATH=$(ls -1 -d ${LVM_ROOT}/lvm/*/python ${LVM_ROOT}/lvmtan/python 2>/dev/null | tr "\n" ":"):$PYTHONPATH
+INSROOT_ETC_PATH=${LVM_TAN_CONFIG_PATH}:${INSROOT_ETC_PATH}
+QT_PLUGIN_PATH=${LVM_TAN_CONFIG_PATH}:${QT_PLUGIN_PATH}
+
+if [ ${LVM_RMQ} ]; then
+     RMQ_CONNECTION="[user=guest,password=guest,host=${LVM_RMQ},port=5672]"
+else
+     test -n "${RMQ_CONNECTION}" && {RMQ_CONNECTION="[user=guest,password=guest,host=localhost,port=5672]"
 fi
-QT_PLUGIN_PATH=$LVM_TAN_PATH/config:$QT_PLUGIN_PATH
+
 
 test -n "$BASDARD_UI" && BASDARD_UI=+UI=$BASDARD_UI
 

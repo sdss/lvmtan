@@ -12,6 +12,7 @@ import BasdaService
 import Nice
 import numpy as np
 
+from .exceptions import LvmTanMotorIsStillMoving
 from .BasdaMoccaCluPythonServiceWorker import *
 from .BasdaMoccaBaseCluPythonServiceWorker import *
 
@@ -40,6 +41,8 @@ class BasdaMoccaXCluPythonServiceWorker(BasdaMoccaCluPythonServiceWorker):
     async def moveToLimit(self, command: Command, limit: int):
         '''Move to positive/negative limit'''
         try:
+            if self.service.isMoving():
+                raise LvmTanMotorIsStillMoving()
             if limit == -1:
                 command.info(text="move to negative")
             elif limit == 1:

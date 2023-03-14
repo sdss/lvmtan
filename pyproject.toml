@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sdss-lvmtan"
-version = "0.0.29"
+version = "0.2.2"
 description = "Lvm Tan Clu Wrapper"
 authors = ["Florian Briegel <briegel@mpia.de>"]
 license = "BSD-3-Clause"
@@ -13,16 +13,14 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Operating System :: OS Independent",
-	"Programming Language :: Python :: 3.7",
-	"Programming Language :: Python :: 3.8",
-	"Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.8",
     "Topic :: Documentation :: Sphinx",
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 packages = [
     { include = "lvmtan", from = "python" }
 ]
-include = ["setup.py", "python/lvmtan/etc/*", "config/*", "container/*", "tests/*"]
+include = ["python/lvmtan/config/*", "python/lvmtan/config/*/*", "python/lvmtan/config/*/*/*"]
 
 [tool.poetry.build]
 script = "build.py"
@@ -35,11 +33,11 @@ container_stop = "container:stop"
 container_isRunning = "container:isRunning"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4"
-sdsstools = "^1.0.0"
-sdss-clu = "^1.0"
-sdss-lvmtipo = ">=0.0.6"
-sdss-cluplus = ">=0.0.17"
+python = ">=3.8, <4"
+sdsstools = ">=0.4.0"
+sdss-clu = ">=2.0.0"
+sdss-lvmtipo = ">=0.0.36"
+sdss-cluplus = ">=0.0.1"
 
 [tool.poetry.dev-dependencies]
 flake8 = ">=3.7.9"
@@ -54,8 +52,7 @@ codecov = ">=2.0.15"
 coverage = {version = ">=5.0", extras = ["toml"]}
 ipdb = ">=0.12.3"
 rstcheck = "^3.3.1"
-Sphinx = ">=3.0.0"
-black = ">=23.0.0"
+Sphinx = "^3.0.0"
 
 [tool.isort]
 line_length = 79
@@ -86,5 +83,5 @@ exclude_lines = [
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "setuptools>=49.6.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
