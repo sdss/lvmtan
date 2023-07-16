@@ -228,7 +228,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     @command_parser.command("slewStart")
     @click.argument("RA", type=float)
     @click.argument("DEC", type=float)
-    @click.argument("DELTA_TIME", type=int, default=1)
+    @click.argument("DELTA_TIME", type=int, default=2)
     @BasdaCluPythonServiceWorker.wrapper
     async def slewStart(
         self,
