@@ -8,8 +8,8 @@ BASDARD_ADAPTER="[NAME=$BASDARD_NAME,PORT=$BASDARD_PORT]"
 
 LVM_ROOT=$HOME
 if [ ${LVM_DEBUG} ]; then
-    LVM_TAN_CONFIG_PATH=/home/sdss5/software/lvmtan/main/python/lvmtan/config/
-    PYTHONPATH=/home/sdss5/software/lvmtan/main/python/:$PYTHONPATH
+    LVM_TAN_CONFIG_PATH=${LVM_ROOT}/lvm/lvmtan/python/lvmtan/config/
+    PYTHONPATH=$(ls -1 -d ${LVM_ROOT}/lvm/*/python 2>/dev/null | tr "\n" ":"):$PYTHONPATH
 else
     LVM_TAN_CONFIG_PATH=$(${PYTHON} -c "import lvmtan as _; print(_.__path__[0])")/config
 fi
