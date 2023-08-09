@@ -67,7 +67,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.sid = Siderostat(azang=azang, medSign=medSign)
 
         self.derot_buffer = 100
-        self.derot_dist = 7
+        self.derot_dist = 17
         self.backlashInSteps = 1000
         self.homeIsWest = False
 
@@ -228,7 +228,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     @command_parser.command("slewStart")
     @click.argument("RA", type=float)
     @click.argument("DEC", type=float)
-    @click.argument("DELTA_TIME", type=int, default=2)
+    @click.argument("DELTA_TIME", type=int, default=1)
     @BasdaCluPythonServiceWorker.wrapper
     async def slewStart(
         self,
@@ -265,13 +265,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 )
             self.service.moveAbsoluteWait()
 
-            self.service.moveRelative(self.backlashInSteps, "STEPS")
-
             position_error = position - self.service.getDeviceEncoderPosition("STEPS")
             if abs(position_error) > 0:
                 A_LOG(f"position error {position_error} steps")
                 command.warning(LostSteps=position_error)
-#                raise LvmTanOutOfRange()
+                raise LvmTanOutOfRange()
+
+            self.service.moveRelative(self.backlashInSteps, "STEPS")
 
 
         except Exception as e:
