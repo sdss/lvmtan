@@ -248,10 +248,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             target = Target(targ)
 
-            position = self._sid_mpiaMocon(target)[0][2] - self.backlashInSteps
+            position = self._sid_mpiaMocon(target)[0][2] 
 
             I_LOG(f"field angle {position} steps")
-            self.service.moveAbsoluteStart(position, "STEPS")
+            self.service.moveAbsoluteStart(position - self.backlashInSteps, "STEPS")
 
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.1)
@@ -265,13 +265,15 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 )
             self.service.moveAbsoluteWait()
 
+            self.service.moveRelative(self.backlashInSteps, "STEPS")
+
             position_error = position - self.service.getDeviceEncoderPosition("STEPS")
+
             if abs(position_error) > 10:
                 A_LOG(f"position error {position_error} steps")
                 command.warning(LostSteps=position_error)
                 raise LvmTanOutOfRange()
 
-            self.service.moveRelative(self.backlashInSteps, "STEPS")
 
 
         except Exception as e:
