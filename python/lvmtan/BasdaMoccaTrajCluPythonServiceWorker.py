@@ -266,7 +266,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             self.service.moveAbsoluteWait()
 
             position_error = position - self.service.getDeviceEncoderPosition("STEPS")
-            if abs(position_error) > 0:
+            if abs(position_error) > 10:
                 A_LOG(f"position error {position_error} steps")
                 command.warning(LostSteps=position_error)
                 raise LvmTanOutOfRange()
