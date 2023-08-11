@@ -123,15 +123,15 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             await asyncio.sleep(delta_time)
 
 
-    async def _slewTickMocon(self, command, target, delta_time):
+    async def _slewTickMocon(self, command, target, delta_time, offsetInSteps):
 
         try:
-            async def setSegment(parent, idx, t0, t1=None):
-                cmd = f"{idx%parent.derot_buffer} {t0[0]} {t0[1]} {t0[2]}"
+            async def setSegment(parent, idx, t0, t1=None, offsetInSteps:int=0):
+                cmd = f"{idx%parent.derot_buffer} {t0[0]} {t0[1]} {t0[2]+offsetInSteps}"
                 U8_LOG (cmd)
                 await parent._chat(1, 221, parent.device_module, 0, cmd)
                 if t1:
-                    cmd = f"{(idx+1)%parent.derot_buffer} 0 0 {t1[2]}"
+                    cmd = f"{(idx+1)%parent.derot_buffer} 0 0 {t1[2]+offsetInSteps}"
                     U8_LOG(cmd)
                     await parent._chat(1, 221, parent.device_module, 0, cmd)
 
@@ -229,26 +229,32 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     @click.argument("RA", type=float)
     @click.argument("DEC", type=float)
     @click.argument("DELTA_TIME", type=int, default=1)
+    @click.option("--offset_angle", type=float, default=0.0, show_default=True, help="Derotation offset in degree (9000 motor steps/sky degree).",)
+    @click.option("--derot_dist", type=float, default=8.0, show_default=True, help="Minimal number of trajectory segments in buffer.",)
     @BasdaCluPythonServiceWorker.wrapper
     async def slewStart(
         self,
         command: Command,
         ra: float,
         dec: float,
-        delta_time: int
+        delta_time: int,
+        offset_angle: float,
+        derot_dist: int,
     ):
         """Start slew"""
-        I_LOG(f"start slew now {ra} {dec} {delta_time} {self.site}")
+        I_LOG(f"start slew now {ra} {dec} {delta_time} {offset_angle} {self.site}")
 
         try:
             await self._slewStop()
+
+            offsetInSteps = offset_angle / 9000.0
 
             targ = astropy.coordinates.SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg))
 #            I_LOG(astropy.version.version)
 
             target = Target(targ)
 
-            position = self._sid_mpiaMocon(target)[0][2] 
+            position = self._sid_mpiaMocon(target)[0][2] + offsetInSteps
 
             I_LOG(f"field angle {position} steps")
             self.service.moveAbsoluteStart(position - self.backlashInSteps, "STEPS")
@@ -285,7 +291,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             if self.simulate:
                 self.task = loop.create_task(self._slewTickSimulate(command, target, delta_time))
             else:
-                self.task = loop.create_task(self._slewTickMocon(command, target, delta_time))
+                self.task = loop.create_task(self._slewTickMocon(command, target, delta_time, offsetInSteps))
 
 
         except Exception as e:
