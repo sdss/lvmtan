@@ -6,10 +6,9 @@ BASDARD_NAME=`basename ${BASDARD_CONFIG##*/} .conf`
 test -n "$BASDARD_PORT" || BASDARD_PORT=`shuf -i 2000-65000 -n 1`
 BASDARD_ADAPTER="[NAME=$BASDARD_NAME,PORT=$BASDARD_PORT]"
 
-LVM_ROOT=$HOME
 if [ ${LVM_DEBUG} ]; then
-    LVM_TAN_CONFIG_PATH=${LVM_ROOT}/lvm/lvmtan/python/lvmtan/config/
-    PYTHONPATH=$(ls -1 -d ${LVM_ROOT}/lvm/*/python 2>/dev/null | tr "\n" ":"):$PYTHONPATH
+    LVM_TAN_CONFIG_PATH=${LVM_ROOT}/python/lvmtan/config/
+    PYTHONPATH=${LVM_ROOT}/python:$PYTHONPATH
 else
     LVM_TAN_CONFIG_PATH=$(${PYTHON} -c "import lvmtan as _; print(_.__path__[0])")/config
 fi
