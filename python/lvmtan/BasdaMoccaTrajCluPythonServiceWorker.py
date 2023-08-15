@@ -189,7 +189,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                             },
                             internal=True
                         )
-                    await asyncio.sleep(0.3)
+                    await asyncio.sleep(1)
 
                 except Exception as ex:
                     E_LOG(ex)
