@@ -69,6 +69,14 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                 time.sleep(random()/42)
 
 
+    async def _stop(self):
+        try:
+            return command.finish( **self._status(self.service.isReachable()) )
+
+        except Exception as e:
+            command.fail(error=e)
+
+
     @command_parser.command("status")
     @BasdaCluPythonServiceWorker.wrapper
     async def status(self, command: Command):

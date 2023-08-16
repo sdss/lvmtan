@@ -21,3 +21,5 @@ class LvmTanOutOfRange(LvmTanError):
 class LvmTanMotorIsStillMoving(LvmTanError):
     """Motor is still in movement"""
 
+class LvmTanMotorLostSteps(LvmTanError):
+    """Motor lost steps"""
