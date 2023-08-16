@@ -66,6 +66,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                     "Velocity": self.service.getVelocity() if reachable else "Unknown",
                 }
             except Exception as e:
+                W_LOG(f"timeout handled: {e}")
                 time.sleep(random()/42)
 
 

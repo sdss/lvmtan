@@ -67,7 +67,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.sid = Siderostat(azang=azang, medSign=medSign)
 
-        self.derot_buffer = 10000
+        self.derot_buffer = 1000
         self.seg_time_default = 1
         self.seg_min_num_default = 17
         self.backlashInSteps = 1000
@@ -130,7 +130,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         try:
             async def setSegment(parent, idx, t0, t1=None, offsetInSteps:int=0):
                 cmd = f"{idx%parent.derot_buffer} {t0[0]} {t0[1]} {t0[2]+int(offsetInSteps)}"
-                I_LOG (f"{offsetInSteps} {cmd}")
+                U1_LOG (f"{offsetInSteps} {cmd}")
                 await parent._chat(1, 221, parent.device_module, 0, cmd)
                 if t1:
                     U1_LOG (f"{offsetInSteps} {cmd}")
@@ -173,35 +173,23 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                         N_LOG(f"{nowpdt} {upidx}")
                         traj = self._sid_mpiaMocon(target, time=nowpdt)
 
-                        try:
-                            await setSegment(self, upidx, traj[0], traj[1], offsetInSteps=offsetInSteps)
-                            upidx+=1
-#                            U8_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} "
-#                                  f"updist: {updistance} idx: {upidx}")
+                        await setSegment(self, upidx, traj[0], traj[1], offsetInSteps=offsetInSteps)
+                        upidx+=1
+                        U8_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} "
+                               f"updist: {updistance} idx: {upidx}")
                             
-                        except Exception as ex:
-                            W_LOG(f"Failed setting segment, try again in {seg_time} updist: {updistance} idx: {upidx}")
-                        
                         command.actor.write(
-                           "i",
-                           {
-                                **self._status(self.service.isReachable())
-                                #"Position": self.service.getPosition(),
-                                #"SkyPA": self.service.getDeviceEncoderPosition("SKY"),
-                                #"DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                                #"Velocity": self.service.getVelocity(),
-                                #"AtHome": self.service.isAtHome(),
-                                #"AtLimit": self.service.isAtLimit(),
-                            },
+                           "i", self._status(self.service.isReachable()),
                             internal=True
                         )
-                    st =  seg_time
+                    st =  (seg_time * 2) - 1 if seg_time > 1 else 0.5
                     while self.task_loop_active and st > 0:
                         st-=1
                         await asyncio.sleep(0.5)
 
                 except Exception as ex:
-                    E_LOG(ex)
+                    W_LOG(ex)
+                    await asyncio.sleep(0.5)
 #                    break
 
         except Exception as ex:
@@ -228,7 +216,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         try:
             self.task_loop_active = False
-            await asyncio.wait_for(self.task, timeout=5)
+            await asyncio.wait_for(self.task, timeout=10)
 
         except asyncio.TimeoutError:
             W_LOG("Killing slew task")
