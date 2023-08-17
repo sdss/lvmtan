@@ -142,7 +142,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 rc = self._chat(1, 226, self.device_module)
 
             except Exception as ex:
-                pass
+                await asyncio.sleep(0.1)
 
             # create buffer
             rc = self._chat(1, 220, self.device_module, self.derot_buffer, 0)

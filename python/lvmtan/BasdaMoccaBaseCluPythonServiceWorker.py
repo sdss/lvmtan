@@ -170,6 +170,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         if select == maxsize: select = ""
 
         try:
+            rc = None
 #            I_LOG(f" {card} {com} {module} {select} {params} {lines}: call")
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             time.sleep(0.02)
@@ -177,7 +178,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 #            I_LOG(f" {card} {com} {module} {select} {params} {lines}: {rc}")
 
         except ServiceIsBusyException as ex:
-            W_LOG("got busy exception - wait and try again")
+            W_LOG(f"got busy exception - wait and try again {card} {com} {module} {select} {params} {lines} {'r' if rc else 's'}")
             time.sleep(0.4)
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             time.sleep(0.02)
@@ -202,6 +203,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         """Check hardware reachability"""
         try:
             rc = self._chat(card, com, module, select, params, lines)
+            await asyncio.sleep(0.05)
             return command.finish(
                 ChatRc = rc
             )
