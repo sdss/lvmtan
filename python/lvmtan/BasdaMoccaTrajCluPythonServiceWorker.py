@@ -217,7 +217,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     async def _slewStop(self):
         """Stop slew"""
 
-        if not self.task_loop_active:
+        if not self.task:
             return
 
         try:
@@ -227,6 +227,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         except asyncio.TimeoutError:
             W_LOG("Killing slew task")
             self.task.cancel()
+
             try:
                 await self.task
 
@@ -245,7 +246,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 rc = self._chat(1, 226, self.device_module)
 
         self.task = None
-
 
     @command_parser.command("slewStart")
     @click.argument("RA", type=float)
