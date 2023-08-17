@@ -73,8 +73,8 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                         switchStatusName = "AtLimit"
                         switchStatusValue = self.service.isAtHome() if reachable else "Unknown",
                     else:
-                        switchStatusName = "PositionSwitch"
-                        switchStatusValue = self.service.getPositionSwitchStatus()[0].getValue() if reachable else "Unknown",
+                        switchStatusName = "PositionSwitchStatus"
+                        switchStatusValue = int(self.service.getPositionSwitchStatus()[0].getValue()) if reachable else "Unknown"
 
                     self.statusCacheData = {
                         "Reachable": reachable,
@@ -82,7 +82,8 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                         "Moving": self.service.isMoving() if reachable else "Unknown",
                         switchStatusName: switchStatusValue,
                         "Position": self.service.getPosition() if reachable else "Unknown",
-                        "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown", "Unit": "STEPS"},
+                        "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown",
+                                          "Unit": "STEPS"},
                         "Velocity": self.service.getVelocity() if reachable else "Unknown",
                     }
 
