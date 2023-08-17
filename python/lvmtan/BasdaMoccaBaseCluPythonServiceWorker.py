@@ -172,17 +172,14 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         try:
 #            I_LOG(f" {card} {com} {module} {select} {params} {lines}: call")
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
-#            await asyncio.sleep(0.02)
             time.sleep(0.02)
             rc = self.service.receive().split('\n')
 #            I_LOG(f" {card} {com} {module} {select} {params} {lines}: {rc}")
 
         except ServiceIsBusyException as ex:
             W_LOG("got busy exception - wait and try again")
-#            await asyncio.sleep(0.4)
             time.sleep(0.4)
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
- #           await asyncio.sleep(0.01)
             time.sleep(0.02)
             rc = self.service.receive().split('\n')
 #            I_LOG(f"+ {card} {com} {module} {select} {params} {lines}: {rc}")
