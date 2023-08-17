@@ -18,7 +18,7 @@ import numpy as np
 import Nice
 import Basda 
 import BasdaService
-from Nice import I_LOG, U9_LOG, A_LOG, F_LOG
+from Nice import I_LOG, U9_LOG, A_LOG, F_LOG, setLogName
 
 from clu import AMQPActor, Command, command_parser
 from clu.device import Device
@@ -64,6 +64,7 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
         self.simulate = None
         self.device_module = None
 
+#        setLogName(self.conn["name"])
 
     async def connect(self):
         await self.actor.start()

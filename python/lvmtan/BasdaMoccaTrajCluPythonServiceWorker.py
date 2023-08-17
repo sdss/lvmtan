@@ -131,53 +131,59 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             async def setSegment(parent, idx, t0, t1=None, offsetInSteps:int=0):
                 cmd = f"{idx%parent.derot_buffer} {t0[0]} {t0[1]} {t0[2]+int(offsetInSteps)}"
                 U1_LOG (f"{offsetInSteps} {cmd}")
-                await parent._chat(1, 221, parent.device_module, 0, cmd)
+                parent._chat(1, 221, parent.device_module, 0, cmd)
                 if t1:
                     U1_LOG (f"{offsetInSteps} {cmd}")
                     cmd = f"{(idx+1)%parent.derot_buffer} 0 0 {t1[2]+int(offsetInSteps)}"
-                    await parent._chat(1, 221, parent.device_module, 0, cmd)
+                    parent._chat(1, 221, parent.device_module, 0, cmd)
 
             try:
                 # clear buffer
-                rc = await self._chat(1, 226, self.device_module)
+                rc = self._chat(1, 226, self.device_module)
 
             except Exception as ex:
                 pass
 
             # create buffer
-            rc = await self._chat(1, 220, self.device_module, self.derot_buffer, 0)
+            rc = self._chat(1, 220, self.device_module, self.derot_buffer, 0)
 
-            now = astropy.time.Time.now()
             traj = self._sid_mpiaMocon(target, polyN=seg_min_num, seg_time=seg_time)
 
-
+            traj_start = astropy.time.Time.now()
             for i in range(seg_min_num + 1):
                 await setSegment(self, i, traj[i], offsetInSteps=offsetInSteps)
-#            await setSegment(self, i+1, traj[i+1])
 
             # profile start from beginning
-            await self._chat(1, 222, self.device_module, 0)
+            self._chat(1, 222, self.device_module, 0)
 
             upidx = seg_min_num
             while self.task_loop_active:
                 try:
-                    rc = await self._chat(1, 225, self.device_module)
-                    moidx = int(rc[0].split(' ')[-1])
-                    updistance=((upidx % self.derot_buffer) - moidx + self.derot_buffer) % self.derot_buffer
-                    if updistance < seg_min_num:
-                        nowpdt = now + astropy.time.TimeDelta(seg_time * upidx * astropy.units.second)
-                        N_LOG(f"{nowpdt} {upidx}")
-                        traj = self._sid_mpiaMocon(target, time=nowpdt)
+                    moidx = -1
+                    try:
+                        rc = self._chat(1, 225, self.device_module)
+                        moidx = int(rc[0].split(' ')[-1])
 
+                    except Exception as e:
+                        W_LOG(f"handled exception: {e}")
+                        pass
+
+                    traj_next_seg_time = traj_start + astropy.time.TimeDelta(seg_time * upidx * astropy.units.second)
+                    traj_time_left = (traj_next_seg_time - astropy.time.Time.now()).datetime.total_seconds()
+
+                    if traj_time_left < seg_min_num * seg_time:
+                        traj = self._sid_mpiaMocon(target, time = traj_next_seg_time)
                         await setSegment(self, upidx, traj[0], traj[1], offsetInSteps=offsetInSteps)
+                        if upidx - moidx + 1 <  seg_min_num:
+                            N_LOG(f"{self.conn['name']}: tleft: {traj_time_left} idx: {upidx} moidx: {moidx}")
+
                         upidx+=1
-                        U8_LOG(f"pos: {self.service.getIncrementalEncoderPosition()} {self.service.getDeviceEncoderPosition()} "
-                               f"updist: {updistance} idx: {upidx}")
-                            
+
                         command.actor.write(
                            "i", self._status(self.service.isReachable()),
                             internal=True
                         )
+
                     st =  (seg_time * 2) - 1 if seg_time > 1 else 0.5
                     while self.task_loop_active and st > 0:
                         st-=1
@@ -186,14 +192,13 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 except Exception as ex:
                     W_LOG(ex)
                     await asyncio.sleep(0.5)
-#                    break
+
 
         except Exception as ex:
             F_LOG(ex)
-
         try:
             # profile stop
-            rc = await self._chat(1, 224, self.device_module)
+            rc = self._chat(1, 224, self.device_module)
 
             while self.service.isMoving():
                 await asyncio.sleep(0.3)
@@ -201,7 +206,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         except Exception as ex:
             F_LOG(ex)
 
-        I_LOG("Good bye and thanks for alll the fish")
+        command.actor.write(
+            "i", self._status(self.service.isReachable()),
+                    internal=True
+            )
+
+        I_LOG("Good bye and thanks for all the fish")
 
 
     async def _slewStop(self):
@@ -225,14 +235,14 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             
             if not self.simulate:
                 ## profile stop
-                rc = await self._chat(1, 224, self.device_module)
+                rc = self._chat(1, 224, self.device_module)
 
             while self.service.isMoving():
                 await asyncio.sleep(0.3)
 
             if not self.simulate:
                 ## clear buffer
-                rc = await self._chat(1, 226, self.device_module)
+                rc = self._chat(1, 226, self.device_module)
 
         self.task = None
 
