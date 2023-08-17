@@ -145,19 +145,15 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 pass
 
             # create buffer
-#            rc = await self._chat(1, 220, self.device_module, self.derot_buffer)
             rc = await self._chat(1, 220, self.device_module, self.derot_buffer, 0)
 
             now = astropy.time.Time.now()
             traj = self._sid_mpiaMocon(target, polyN=seg_min_num, seg_time=seg_time)
 
-#            N_LOG(f"traj {traj}")
 
             for i in range(seg_min_num + 1):
                 await setSegment(self, i, traj[i], offsetInSteps=offsetInSteps)
 #            await setSegment(self, i+1, traj[i+1])
-
-#            N_LOG(f"last segment {i}")
 
             # profile start from beginning
             await self._chat(1, 222, self.device_module, 0)
@@ -240,28 +236,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.task = None
 
-        #if self.task:
-            #self.task.cancel()
-            #try:
-                #await self.task
-
-            #except asyncio.CancelledError:
-                #U7_LOG("slew task is cancelled now")
-
-
-            #if not self.simulate:
-                ### profile stop
-                #rc = await self._chat(1, 224, self.device_module)
-
-            #while self.service.isMoving():
-                #await asyncio.sleep(0.3)
-
-            #if not self.simulate:
-                ### clear buffer
-                #rc = await self._chat(1, 226, self.device_module)
-
-            #self.task = None
-
 
     @command_parser.command("slewStart")
     @click.argument("RA", type=float)
@@ -282,7 +256,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         """Start slew"""
         if not seg_time:
             seg_time = self.seg_time_default
-        if not seg_time:
+        if not seg_min_num:
             seg_min_num = self.seg_min_num_default
         
         I_LOG(f"start slew now {ra} {dec} offset_ang: {offset_angle} traj_segment_time: {seg_time} traj_seg_min_num: {seg_min_num} site: {self.site}")

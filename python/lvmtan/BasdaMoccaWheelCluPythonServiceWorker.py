@@ -20,6 +20,7 @@ class BasdaMoccaWheelCluPythonServiceWorker(BasdaMoccaCluPythonServiceWorker):
 
     def __init__(self, _svcName):
         BasdaMoccaCluPythonServiceWorker.__init__(self, _svcName)
+        self.hasLimitSwitch=False
 
 
     @command_parser.command("scanAllReferenceSwitches")

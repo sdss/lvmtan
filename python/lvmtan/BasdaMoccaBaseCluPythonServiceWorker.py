@@ -10,6 +10,7 @@ import asyncio
 from sys import maxsize
 import time
 from random import random
+from datetime import datetime
 
 from Basda import ServiceIsBusyException
 
@@ -17,7 +18,7 @@ import BasdaMoccaException
 import BasdaMoccaX
 import BasdaService
 import Nice
-from Nice import I_LOG, U9_LOG, A_LOG, F_LOG, W_LOG, U7_LOG
+from Nice import I_LOG, U9_LOG, A_LOG, F_LOG, N_LOG, W_LOG, U7_LOG
 
 import json
 
@@ -52,23 +53,49 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.schema["properties"]["ChatRc"] = {"type": "array"}
         self.schema["properties"]["Site"] = {"type": "string"}
 
+        self.hasLimitSwitch = True
+        self.statusCacheData = {}
+        self.statusCacheTimestamp = datetime(2000,1,1)
+        self.statusCacheAge = 1.0
+
 
     def _status(self, reachable=True):
-        for i in range(7):
-            try:
-                return {
-                    "Reachable": reachable,
-                    "AtHome": self.service.isAtHome() if reachable else "Unknown",
-                    "Moving": self.service.isMoving() if reachable else "Unknown",
-                    "PositionSwitchStatus": self.service.getPositionSwitchStatus()[0].getValue() if reachable else "Unknown",
-                    "Position": self.service.getPosition() if reachable else "Unknown",
-                    "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown", "Unit": "STEPS"},
-                    "Velocity": self.service.getVelocity() if reachable else "Unknown",
-                }
-            except Exception as e:
-                W_LOG(f"timeout handled: {e}")
-                time.sleep(random()/42)
 
+        age = (datetime.now() - self.statusCacheTimestamp).total_seconds()
+        if  age > self.statusCacheAge:
+            for i in range(7):
+                try:
+                    startPollTime = datetime.now()
+
+                    switchStatusName = None
+                    switchStatusValue = "Unknown"
+                    if self.hasLimitSwitch:
+                        switchStatusName = "AtLimit"
+                        switchStatusValue = self.service.isAtHome() if reachable else "Unknown",
+                    else:
+                        switchStatusName = "PositionSwitch"
+                        switchStatusValue = self.service.getPositionSwitchStatus()[0].getValue() if reachable else "Unknown",
+
+                        self.statusCacheData = {
+                        "Reachable": reachable,
+                        "AtHome": self.service.isAtHome() if reachable else "Unknown",
+                        "Moving": self.service.isMoving() if reachable else "Unknown",
+                        switchStatusName: switchStatusValue,
+                        "Position": self.service.getPosition() if reachable else "Unknown",
+                        "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown", "Unit": "STEPS"},
+                        "Velocity": self.service.getVelocity() if reachable else "Unknown",
+                    }
+
+                    self.statusCacheTimestamp = datetime.now()
+                    N_LOG(f"status poll time: {(datetime.now()-startPollTime).total_seconds()}")
+                    break
+
+                except Exception as e:
+                    W_LOG(f"timeout handled: {e}")
+                    time.sleep(random()/42)
+
+
+        return self.statusCacheData
 
     async def _stop(self):
         try:
