@@ -75,12 +75,27 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
 
-    def _status(self, reachable=True):
-        return {**BasdaMoccaXCluPythonServiceWorker._status(self),
-                "CurrentTime": self.service.getCurrentTime() if reachable else "Unknown",
-                "Simulate": self.simulate,
-                "SkyPA": self.service.getDeviceEncoderPosition("SKY"),
-               }
+
+    async def _stopMovement(self):
+        try:
+            if self.task:
+                await self._slewStop()
+            else:
+                self.service.stop()
+                while self.service.isMoving():
+                    await asyncio.sleep(0.3)
+            
+            return self._status(self.service.isReachable())
+
+        except Exception as e:
+            command.fail(error=e)
+
+    #def _status(self, reachable=True):
+        #return {**BasdaMoccaXCluPythonServiceWorker._status(self),
+                #"CurrentTime": self.service.getCurrentTime() if reachable else "Unknown",
+                #"Simulate": self.simulate,
+                #"SkyPA": self.service.getDeviceEncoderPosition("SKY"),
+               #}
 
     def _sid_mpiaMocon(self, target, polyN=1, seg_time=1, time=None):
         if not time:
@@ -94,7 +109,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                                   polyN=polyN,
                                   time=time)
 
-        N_LOG(f"{time} {traj}")
+#        N_LOG(f"{time} {traj}")
         return traj
 
     async def _slewTickSimulate(self, command, target, seg_time):
@@ -150,9 +165,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             traj = self._sid_mpiaMocon(target, polyN=seg_min_num, seg_time=seg_time)
 
             traj_start = astropy.time.Time.now()
-            for i in range(seg_min_num + 1):
+            for i in range(seg_min_num+1):
                 await setSegment(self, i, traj[i], offsetInSteps=offsetInSteps)
-            await setSegment(self, i+1, traj[i], offsetInSteps=offsetInSteps)
 
             # profile start from beginning
             self._chat(1, 222, self.device_module, 0)
@@ -160,36 +174,42 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             upidx = seg_min_num
             while self.task_loop_active:
                 try:
-                    moidx = -1
-                    try:
-                        rc = self._chat(1, 225, self.device_module)
-                        moidx = int(rc[0].split(' ')[-1])
-
-                    except Exception as e:
-                        W_LOG(f"handled exception: {e}")
-                        pass
-
                     traj_next_seg_time = traj_start + astropy.time.TimeDelta(seg_time * upidx * astropy.units.second)
                     traj_time_left = (traj_next_seg_time - astropy.time.Time.now()).datetime.total_seconds()
 
                     if traj_time_left < seg_min_num * seg_time:
-                        traj = self._sid_mpiaMocon(target, time = traj_next_seg_time)
+                        moidx = None
+
+                        try:
+                            rc = self._chat(1, 225, self.device_module)
+                            moidx = int(rc[0].split(' ')[-1])
+
+                        except Exception as e:
+                            W_LOG(f"handled exception: {e}")
+                            pass
+
+                        traj = self._sid_mpiaMocon(target, seg_time=seg_time, time = traj_next_seg_time)
                         await setSegment(self, upidx, traj[0], traj[1], offsetInSteps=offsetInSteps)
-                        if upidx - moidx + 1 <  seg_min_num:
+                        
+                        if traj_time_left  < (seg_min_num-1 * seg_time):
                             N_LOG(f"{self.conn['name']}: tleft: {traj_time_left} idx: {upidx} moidx: {moidx}")
+#                        I_LOG(f"{self.conn['name']}: tleft: {traj_time_left} idx: {upidx} moidx: {moidx}")
 
                         upidx+=1
 
                         status = self._status(self.service.isReachable())
-                        I_LOG(status)
-
                         command.actor.write("i", **status, internal=True)
 
-                    st =  (seg_time * 2) - 1 if seg_time > 1 else 0.5
-                    while self.task_loop_active and st > 0:
-                        st-=1
-                        await asyncio.sleep(0.5)
+                        try:
+                            if not status["Moving"]:
+                                F_LOG("Movement stopped. ")
+                                break
+                        
+                        except Exception as e:
+                            pass
 
+                    await asyncio.sleep(0.3)
+                        
                 except Exception as ex:
                     W_LOG(ex)
                     await asyncio.sleep(0.5)
@@ -239,8 +259,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 ## profile stop
                 rc = self._chat(1, 224, self.device_module)
 
-            while self.service.isMoving():
-                await asyncio.sleep(0.3)
+            #if not self.simulate:
+                #while not self.service.isMoving():
+                    #await asyncio.sleep(0.3)
 
             if not self.simulate:
                 ## clear buffer
@@ -289,15 +310,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.5)
-                #command.info(
-                    #Site=self.site,
-                    #Position=self.service.getPosition(),
-                    #DeviceEncoder={"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                    #Velocity=self.service.getVelocity(),
-                    #AtHome=self.service.isAtHome(),
-                    #AtLimit=self.service.isAtLimit(),
-                #)
                 command.info( **self._status(self.service.isReachable()) )
+
             self.service.moveAbsoluteWait()
 
             self.service.moveRelative(self.backlashInSteps, "STEPS")
@@ -309,8 +323,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 command.warning(LostSteps=position_error)
                 raise LvmTanMotorLostSteps(position_error)
 
-
-
         except Exception as e:
             return command.fail(error=e)
 
@@ -321,12 +333,22 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 self.task = loop.create_task(self._slewTickSimulate(command, target, seg_time))
             else:
                 self.task = loop.create_task(self._slewTickMocon(command, target, seg_time, seg_min_num, offsetInSteps))
+
             self.task_loop_active = True
 
         except Exception as e:
-            command.fail(error=e)
+            return command.fail(error=e)
+
+        #for i in range(3):
+            #await asyncio.sleep(0.2)
+            #if service.isMoving():
+                #I_LOG(f"done")
 
         I_LOG(f"done")
+
+        #if service.isMoving():
+            #W_LOG("Motor has not started yet")
+
         return command.finish(**self._status(self.service.isReachable()))
 
 

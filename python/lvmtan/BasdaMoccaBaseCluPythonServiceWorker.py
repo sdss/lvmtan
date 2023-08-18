@@ -59,6 +59,29 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.statusCacheAge = 1.0
 
 
+    async def _stopMovement(self):
+        try:
+            self.service.stop()
+            while self.service.isMoving():
+                await asyncio.sleep(0.3)
+            return self._status(self.service.isReachable())
+
+        except Exception as e:
+            command.fail(error=e)
+
+
+    @command_parser.command("stop")
+    @BasdaCluPythonServiceWorker.wrapper
+    async def stopMovement(self, command: Command):
+        """Stop"""
+        try:
+
+            return command.finish(**await self._stopMovement())
+
+        except Exception as e:
+            command.fail(error=e)
+
+
     def _status(self, reachable=True):
 
         age = (datetime.now() - self.statusCacheTimestamp).total_seconds()
@@ -99,13 +122,6 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                     time.sleep(random()/42)
 
         return self.statusCacheData
-
-    async def _stop(self):
-        try:
-            return command.finish( **self._status(self.service.isReachable()) )
-
-        except Exception as e:
-            command.fail(error=e)
 
 
     @command_parser.command("status")
