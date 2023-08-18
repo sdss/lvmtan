@@ -201,10 +201,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                         command.actor.write("i", **status, internal=True)
 
                         try:
-                            if not status["Moving"]:
-                                F_LOG("Movement stopped. ")
-                                break
-                        
+                            if upidx > seg_min_num + 3 and not status["Moving"]:
+                                F_LOG(f"{self.conn['name']}: Movement stopped. ")
+                                # break
+
                         except Exception as e:
                             pass
 
