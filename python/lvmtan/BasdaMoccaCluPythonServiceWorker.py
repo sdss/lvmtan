@@ -143,13 +143,10 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
             if self.service.isMoving():
                 raise LvmTanMotorIsStillMoving()
             self.service.moveRelativeStart(position, unit)
+            await asyncio.sleep(0.1)
             while not self.service.moveRelativeCompletion().isDone():
-                await asyncio.sleep(0.1)
-                command.info(
-                    Position=self.service.getPosition(),
-                    DeviceEncoder={"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                    Velocity=self.service.getVelocity(),
-                )
+                await asyncio.sleep(0.3)
+                command.info(**self._status(self.service.isReachable()))
             self.service.moveRelativeWait()
 
             return command.finish(**self._status(self.service.isReachable()))
@@ -168,13 +165,10 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
             if self.service.isMoving():
                 raise LvmTanMotorIsStillMoving()
             self.service.moveAbsoluteStart(position, unit)
+            await asyncio.sleep(0.1)
             while not self.service.moveAbsoluteCompletion().isDone():
-                await asyncio.sleep(0.1)
-                command.info(
-                    Position=self.service.getPosition(),
-                    DeviceEncoder={"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                    Velocity=self.service.getVelocity(),
-                )
+                await asyncio.sleep(0.3)
+                command.info(**self._status(self.service.isReachable()))
             self.service.moveAbsoluteWait()
 
             return command.finish(**self._status(self.service.isReachable()))
@@ -193,12 +187,8 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
                 raise LvmTanMotorIsStillMoving()
             self.service.moveToHomeStart()
             while not self.service.moveToHomeCompletion().isDone():
-                await asyncio.sleep(0.1)
-                command.info(
-                    Position=self.service.getPosition(),
-                    DeviceEncoder={"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                    Velocity=self.service.getVelocity(),
-                )
+                await asyncio.sleep(0.3)
+                command.info(**self._status(self.service.isReachable()))
             self.service.moveToHomeWait()
 
             return command.finish(**self._status(self.service.isReachable()))
@@ -217,14 +207,8 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
                 raise LvmTanMotorIsStillMoving()
             self.service.moveToNamedPositionStart(namedposition)
             while not self.service.moveToNamedPositionCompletion().isDone():
-                await asyncio.sleep(0.1)
-                command.info(
-                    Position=self.service.getPosition(),
-                    DeviceEncoder={"Position": self.service.getDeviceEncoderPosition("STEPS"), "Unit": "STEPS"},
-                    Velocity=self.service.getVelocity(),
-                    AtHome=self.service.isAtHome(),
-                    AtLimit=self.service.isAtLimit(),
-                )
+                await asyncio.sleep(0.3)
+                command.info(**self._status(self.service.isReachable()))
 
             self.service.moveToNamedPositionWait()
 

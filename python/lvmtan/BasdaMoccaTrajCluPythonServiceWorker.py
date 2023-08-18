@@ -94,7 +94,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                                   polyN=polyN,
                                   time=time)
 
-        U8_LOG(f"{time} {traj}")
+        N_LOG(f"{time} {traj}")
         return traj
 
     async def _slewTickSimulate(self, command, target, seg_time):
@@ -152,6 +152,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             traj_start = astropy.time.Time.now()
             for i in range(seg_min_num + 1):
                 await setSegment(self, i, traj[i], offsetInSteps=offsetInSteps)
+            await setSegment(self, i+1, traj[i], offsetInSteps=offsetInSteps)
 
             # profile start from beginning
             self._chat(1, 222, self.device_module, 0)
@@ -179,10 +180,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
                         upidx+=1
 
-                        command.actor.write(
-                           "i", self._status(self.service.isReachable()),
-                            internal=True
-                        )
+                        status = self._status(self.service.isReachable())
+                        I_LOG(status)
+
+                        command.actor.write("i", **status, internal=True)
 
                     st =  (seg_time * 2) - 1 if seg_time > 1 else 0.5
                     while self.task_loop_active and st > 0:
