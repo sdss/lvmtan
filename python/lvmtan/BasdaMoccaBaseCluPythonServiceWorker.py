@@ -64,7 +64,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
             self.service.stop()
             while self.service.isMoving():
                 await asyncio.sleep(0.3)
-            return self._status(self.service.isReachable())
+            return await self._status(self.service.isReachable())
 
         except Exception as e:
             command.fail(error=e)
@@ -82,44 +82,45 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
             command.fail(error=e)
 
 
-    def _status(self, reachable=True):
+    async def _status(self, reachable=True):
+        """Check status implementation"""
+        lock = asyncio.Lock()
+            
+        async with lock:
+            age = (datetime.now() - self.statusCacheTimestamp).total_seconds()
+            if  age > self.statusCacheAge:
+                    try:
+                        startPollTime = datetime.now()
 
-        age = (datetime.now() - self.statusCacheTimestamp).total_seconds()
-        if  age > self.statusCacheAge:
-            for i in range(7):
-                try:
-                    startPollTime = datetime.now()
+                        switchStatusName = None
+                        switchStatusValue = "Unknown"
+                        if self.hasLimitSwitch:
+                            switchStatusName = "AtLimit"
+                            switchStatusValue = self.service.isAtLimit() if reachable else "Unknown"
+                        else:
+                            switchStatusName = "PositionSwitchStatus"
+                            switchStatusValue = int(self.service.getPositionSwitchStatus()[0].getValue()) if reachable else "Unknown"
 
-                    switchStatusName = None
-                    switchStatusValue = "Unknown"
-                    if self.hasLimitSwitch:
-                        switchStatusName = "AtLimit"
-                        switchStatusValue = self.service.isAtHome() if reachable else "Unknown",
-                    else:
-                        switchStatusName = "PositionSwitchStatus"
-                        switchStatusValue = int(self.service.getPositionSwitchStatus()[0].getValue()) if reachable else "Unknown"
-
-                    self.statusCacheData = {
-                        "Reachable": reachable,
-                        "AtHome": self.service.isAtHome() if reachable else "Unknown",
-                        "Moving": self.service.isMoving() if reachable else "Unknown",
-                        switchStatusName: switchStatusValue,
-                        "Position": self.service.getPosition() if reachable else "Unknown",
-                        "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown",
-                                          "Unit": "STEPS"},
-                        "Velocity": self.service.getVelocity() if reachable else "Unknown",
-                    }
+                        self.statusCacheData = {
+                            "Reachable": reachable,
+                            "AtHome": self.service.isAtHome() if reachable else "Unknown",
+                            "Moving": self.service.isMoving() if reachable else "Unknown",
+                            switchStatusName: switchStatusValue,
+                            "Position": self.service.getPosition() if reachable else "Unknown",
+                            "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown",
+                                            "Unit": "STEPS"},
+                            "Velocity": self.service.getVelocity() if reachable else "Unknown",
+                        }
 
 
-                    self.statusCacheTimestamp = datetime.now()
-                    polltime = (datetime.now()-startPollTime).total_seconds()
-                    if polltime > 0.070:
-                        N_LOG(f"status age: {age}, poll time > 70ms: {polltime}")
-                    break
+                        self.statusCacheTimestamp = datetime.now()
+                        polltime = (datetime.now()-startPollTime).total_seconds()
+                        if polltime > 0.070:
+                            N_LOG(f"status age: {age}, poll time > 70ms: {polltime}")
 
-                except Exception as e:
-                    W_LOG(f"timeout handled: {e}")
-                    time.sleep(random()/42)
+                    except Exception as e:
+                        W_LOG(f"timeout handled: {e}")
+                        time.sleep(random()/42)
 
         return self.statusCacheData
 
@@ -129,7 +130,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
     async def status(self, command: Command):
         """Check status"""
         try:
-            return command.finish( **self._status(self.service.isReachable()) )
+            return command.finish( ** await self._status(self.service.isReachable()) )
 
         except Exception as e:
             command.fail(error=e)
@@ -189,14 +190,15 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         try:
             rc = None
 #            I_LOG(f" {card} {com} {module} {select} {params} {lines}: call")
+            time.sleep(0.01)
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             time.sleep(0.02)
             rc = self.service.receive().split('\n')
 #            I_LOG(f" {card} {com} {module} {select} {params} {lines}: {rc}")
 
         except ServiceIsBusyException as ex:
-            W_LOG(f"got busy exception - wait and try again {card} {com} {module} {select} {params} {lines} {'r' if rc else 's'}")
-            time.sleep(0.4)
+            I_LOG(f"got busy exception - wait and try again {card} {com} {module} {select} {params} {lines} {'r' if rc else 's'}")
+            time.sleep(0.2)
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             time.sleep(0.02)
             rc = self.service.receive().split('\n')
@@ -220,7 +222,6 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         """Check hardware reachability"""
         try:
             rc = self._chat(card, com, module, select, params, lines)
-            await asyncio.sleep(0.05)
             return command.finish(
                 ChatRc = rc
             )

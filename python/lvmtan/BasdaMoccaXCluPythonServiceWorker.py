@@ -23,10 +23,6 @@ class BasdaMoccaXCluPythonServiceWorker(BasdaMoccaCluPythonServiceWorker):
         BasdaMoccaCluPythonServiceWorker.__init__(self, _svcName)
 
 
-    def _status(self, reachable=True):
-        return {**BasdaMoccaBaseCluPythonServiceWorker._status(self), **{"AtLimit": self.service.isAtLimit() if reachable else "Unknown"}}
-
-
     @command_parser.command("isAtLimit")
     @BasdaCluPythonServiceWorker.wrapper
     async def isAtLimit(self, command: Command):
@@ -62,7 +58,7 @@ class BasdaMoccaXCluPythonServiceWorker(BasdaMoccaCluPythonServiceWorker):
                 )
             self.service.moveToLimitWait()
 
-            return command.finish(**self._status(self.service.isReachable()))
+            return command.finish(**await self._status(self.service.isReachable()))
 
         except Exception as e:
             command.fail(error=e)

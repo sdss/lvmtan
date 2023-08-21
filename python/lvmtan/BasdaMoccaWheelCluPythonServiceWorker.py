@@ -23,22 +23,16 @@ class BasdaMoccaWheelCluPythonServiceWorker(BasdaMoccaCluPythonServiceWorker):
         self.hasLimitSwitch=False
 
 
-    # @command_parser.command("scanAllReferenceSwitches")
-    # @BasdaCluPythonServiceWorker.wrapper
-    # async def scanAllReferenceSwitches(self):
-    #     """Scan all reference switches"""
-    #     try:
-    #         self.service.scanAllReferenceSwitchesStart()
-    #         while not self.service.scanAllReferenceSwitchestCompletion().isDone():
-    #             command.info(
-    #                 Position=self.service.getPosition(),
-    #                 DeviceEncoder={"Position": self.service.getDeviceEncoderPosition("STEPS")[0], "Unit": "STEPS"},
-    #                 Velocity=self.service.getVelocity(),
-    #                 AtHome=self.service.isAtHome(),
-    #                 AtLimit=self.service.isAtLimit(),
-    #             )
-    #         self.service.scanAllReferenceSwitchesWait()
-    #         return command.finish(**self._status(self.service.isReachable()))
-    #
-    #     except Exception as e:
-    #         command.fail(error=e)
+    @command_parser.command("scanAllReferenceSwitches")
+    @BasdaCluPythonServiceWorker.wrapper
+    async def scanAllReferenceSwitches(self):
+        """Scan all reference switches"""
+        try:
+            self.service.scanAllReferenceSwitchesStart()
+            while not self.service.scanAllReferenceSwitchestCompletion().isDone():
+                command.info(** await self._status(self.service.isReachable()))
+            self.service.scanAllReferenceSwitchesWait()
+            return command.finish(** await self._status(self.service.isReachable()))
+    
+        except Exception as e:
+            command.fail(error=e)

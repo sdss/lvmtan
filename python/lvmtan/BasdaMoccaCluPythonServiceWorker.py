@@ -146,10 +146,10 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
             await asyncio.sleep(0.1)
             while not self.service.moveRelativeCompletion().isDone():
                 await asyncio.sleep(0.3)
-                command.info(**self._status(self.service.isReachable()))
+                command.info(**await self._status(self.service.isReachable()))
             self.service.moveRelativeWait()
 
-            return command.finish(**self._status(self.service.isReachable()))
+            return command.finish(**await self._status(self.service.isReachable()))
 
         except Exception as e:
             command.fail(error=e)
@@ -168,10 +168,10 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
             await asyncio.sleep(0.1)
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.3)
-                command.info(**self._status(self.service.isReachable()))
+                command.info(**await self._status(self.service.isReachable()))
             self.service.moveAbsoluteWait()
 
-            return command.finish(**self._status(self.service.isReachable()))
+            return command.finish(**await self._status(self.service.isReachable()))
 
         except Exception as e:
             command.fail(error=e)
@@ -188,10 +188,10 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
             self.service.moveToHomeStart()
             while not self.service.moveToHomeCompletion().isDone():
                 await asyncio.sleep(0.3)
-                command.info(**self._status(self.service.isReachable()))
+                command.info(**await self._status(self.service.isReachable()))
             self.service.moveToHomeWait()
 
-            return command.finish(**self._status(self.service.isReachable()))
+            return command.finish(**await self._status(self.service.isReachable()))
 
         except Exception as e:
             command.fail(error=e)
@@ -208,11 +208,11 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
             self.service.moveToNamedPositionStart(namedposition)
             while not self.service.moveToNamedPositionCompletion().isDone():
                 await asyncio.sleep(0.3)
-                command.info(**self._status(self.service.isReachable()))
+                command.info(**await self._status(self.service.isReachable()))
 
             self.service.moveToNamedPositionWait()
 
-            return command.finish(**self._status(self.service.isReachable()))
+            return command.finish(**await self._status(self.service.isReachable()))
 
         except Exception as e:
             command.fail(error=e)
