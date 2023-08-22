@@ -26,7 +26,7 @@ from lvmtipo.target import Target
 from Nice import A_LOG, E_LOG, F_LOG, I_LOG, N_LOG, U8_LOG, U1_LOG
 
 from .BasdaMoccaXCluPythonServiceWorker import *
-from .exceptions import LvmTanOutOfRange, LvmTanMotorLostSteps
+from .exceptions import LvmTanOutOfRange, LvmTanMotorLostSteps, LvmTanPositionError
 
 
 iers.conf.auto_download = False
@@ -169,8 +169,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
                         try:
                             if upidx > seg_min_num + 3 and not status["Moving"]:
-                                F_LOG(f"{self.conn['name']}: Movement stopped. ")
-                                # break
+                                F_LOG(f"{self.conn['name']}: Movement stopped moveToHome() is required !")
+                                break
 
                         except Exception as e:
                             pass
@@ -283,9 +283,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             position_error = position - self.service.getDeviceEncoderPosition("STEPS")
 
             if abs(position_error) > 1:
-                A_LOG(f"position error {position_error} steps")
+                F_LOG(f"position error {position_error} steps - moveToHome() is required !")
                 command.warning(LostSteps=position_error)
-                raise LvmTanMotorLostSteps(position_error)
+                raise LvmTanPositionError(position_error)
 
         except Exception as e:
             return command.fail(error=e)

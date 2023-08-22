@@ -23,3 +23,6 @@ class LvmTanMotorIsStillMoving(LvmTanError):
 
 class LvmTanMotorLostSteps(LvmTanError):
     """Motor lost steps"""
+
+class LvmTanPositionError(LvmTanError):
+    """Motor wrong position, moveToHome() required"""
