@@ -26,3 +26,6 @@ class LvmTanMotorLostSteps(LvmTanError):
 
 class LvmTanPositionError(LvmTanError):
     """Motor wrong position, moveToHome() required"""
+
+class LvmTanOffsetNotDone(LvmTanError):
+    """An offset is still applied"""

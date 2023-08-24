@@ -115,12 +115,12 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 
                         self.statusCacheTimestamp = datetime.now()
                         polltime = (datetime.now()-startPollTime).total_seconds()
-                        if polltime > 0.070:
-                            N_LOG(f"status age: {age}, poll time > 70ms: {polltime}")
+                        if polltime > 1.0:
+                            N_LOG(f"status age: {age}, poll time > 1s: {polltime}")
 
                     except Exception as e:
-                        W_LOG(f"timeout handled: {e}")
-                        time.sleep(random()/42)
+                        E_LOG(f"Exception: {e}")
+                        command.fail(error=e)
 
         return self.statusCacheData
 
@@ -197,7 +197,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 #            I_LOG(f" {card} {com} {module} {select} {params} {lines}: {rc}")
 
         except ServiceIsBusyException as ex:
-            I_LOG(f"got busy exception - wait and try again {card} {com} {module} {select} {params} {lines} {'r' if rc else 's'}")
+            W_LOG(f"got busy exception - wait and try again {card} {com} {module} {select} {params} {lines} {'r' if rc else 's'}")
             time.sleep(0.2)
             self.service.send(str(card), str(com), str(module), str(select), str(params), str(lines))
             time.sleep(0.02)
