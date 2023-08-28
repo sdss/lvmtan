@@ -141,13 +141,17 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
             nodes=Nice.SeqString()
             self.device.config().node("MOD").children(nodes)
             self.device_module = self.device.config().node(f"MOD.{nodes[0]}.CFG.CONNECTION.MODULE").Int
-            I_LOG(f"{self.device_module}")
+#            I_LOG(f"{self.device_module}")
+
+            self.hasIncrementalEncoder = self.device.config().node(f"MOD.{nodes[0]}.CFG.DATASHEET.ENCODER.TYPE").Int
 
         if (
             self.cfgNode.exist("UNIT")
             and self.cfgNode.node("UNIT").hasLeaf()
         ):
             self.unit = self.cfgNode.node("UNIT").String
+
+
 
     def abort(self):
         self.terminated = True

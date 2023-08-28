@@ -18,7 +18,7 @@ import BasdaMoccaException
 import BasdaMoccaX
 import BasdaService
 import Nice
-from Nice import I_LOG, U9_LOG, A_LOG, F_LOG, N_LOG, W_LOG, U7_LOG
+from Nice import E_LOG, I_LOG, U9_LOG, A_LOG, F_LOG, N_LOG, W_LOG, U7_LOG
 
 import json
 
@@ -49,6 +49,12 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.schema["properties"]["Moving"] = {"type": "boolean"}
         self.schema["properties"]["Reachable"] = {"type": "boolean"}
         self.schema["properties"]["CurrentTime"] = {"type": "number"}
+        self.schema["properties"]["IncrementalEncoderPosition"] = {"type": "number"}
+        self.schema["properties"]["Position"] = {"type": "number"}
+        self.schema["properties"]["DeviceEncoder"] = {"Position": {"type": "number"}, "Unit": {"type": "string"}}
+        self.schema["properties"]["AbsoluteEncoderPosition"] = {"type": "number"}
+        self.schema["properties"]["Velocity"] = {"type": "number"}
+        self.schema["properties"]["PositionSwitchStatus"] = {"type": "number"}
         self.schema["properties"]["Simulate"] = {"type": "boolean"}
         self.schema["properties"]["ChatRc"] = {"type": "array"}
         self.schema["properties"]["Site"] = {"type": "string"}
@@ -108,15 +114,18 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                             switchStatusName: switchStatusValue,
                             "Position": self.service.getPosition() if reachable else "Unknown",
                             "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown",
-                                            "Unit": "STEPS"},
+                                              "Unit": "STEPS"},
                             "Velocity": self.service.getVelocity() if reachable else "Unknown",
                         }
 
+#                        if self.hasIncrementalEncoder:
+#                            self.statusCacheData["IncrementalEncoderPosition"] = self.service.getIncrementalEncoderPosition() if reachable else "Unknown",
+                            
 
                         self.statusCacheTimestamp = datetime.now()
                         polltime = (datetime.now()-startPollTime).total_seconds()
                         if polltime > 1.0:
-                            N_LOG(f"status age: {age}, poll time > 1s: {polltime}")
+                            I_LOG(f"status age: {age}, poll time > 1s: {polltime}")
 
                     except Exception as e:
                         E_LOG(f"Exception: {e}")

@@ -24,12 +24,6 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
 
     def __init__(self, _svcName):
         BasdaMoccaBaseCluPythonServiceWorker.__init__(self, _svcName)
-        self.schema["properties"]["Position"] = {"type": "number"}
-        self.schema["properties"]["DeviceEncoder"] = {"Position": {"type": "number"}, "Unit": {"type": "string"}}
-        self.schema["properties"]["IncrementalEncoderPosition"] = {"type": "number"}
-        self.schema["properties"]["AbsoluteEncoderPosition"] = {"type": "number"}
-        self.schema["properties"]["Velocity"] = {"type": "number"}
-        self.schema["properties"]["PositionSwitchStatus"] = {"type": "number"}
         self.schema["properties"]["NamedPosition"] = {"type": "number"}
         
 

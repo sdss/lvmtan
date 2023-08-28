@@ -68,7 +68,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.sid = Siderostat(azang=azang, medSign=medSign)
 
         self.derot_buffer = 10000
-        self.backlashInSteps = 1000
+        self.backlashInSteps = 300
         self.homeIsWest = False
         self.skydegToSteps = 9000
 
@@ -77,6 +77,8 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.seg_offset_add = None
 
         self.traj_time_left = 0.0
+ 
+        self.homeToIncEncOffset = -140
  
         I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
 
@@ -120,11 +122,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         try:
             async def setSegment(parent, idx, t0, t1=None, offset_in_steps:int=0):
                 cmd = f"{idx%parent.derot_buffer} {t0[0]} {t0[1]} {t0[2]+int(offset_in_steps)}"
-                N_LOG (f"{offset_in_steps} {cmd}")
+                U9_LOG (f"{offset_in_steps} {cmd}")
                 parent._chat(1, 221, parent.device_module, 0, cmd)
                 if t1:
                     cmd = f"{(idx+1)%parent.derot_buffer} 0 0 {t1[2]+int(offset_in_steps)}"
-                    N_LOG (f"{offset_in_steps} {cmd}")
+                    U9_LOG (f"{offset_in_steps} {cmd}")
                     parent._chat(1, 221, parent.device_module, 0, cmd)
 
             def addOffset(seg, offset:int):
@@ -159,6 +161,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             # profile start from beginning
             self._chat(1, 222, self.device_module, 0)
+            incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
+            devencoder=self.service.getDeviceEncoderPosition("STEPS")
+            I_LOG(f"{self.conn['name']}: incdiff: {incencoder-devencoder}")
+
 
             upidx = self.seg_min_num_current
             while self.task_loop_active:
@@ -192,13 +198,16 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                         
                         if self.traj_time_left  < (self.seg_min_num_current-1 * self.seg_time_current):
                             N_LOG(f"{self.conn['name']}: tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
-                        I_LOG(f"{self.conn['name']}: tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
+#                        I_LOG(f"{self.conn['name']}: tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
 
                         upidx+=1
 
                         status = await self._status(self.service.isReachable())
                         devencpos=int(status['DeviceEncoder']['Position'])
-                        I_LOG(f"positionInSteps: {devencpos} {traj[0][2]-devencpos}")
+                        incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
+                        devencoder=self.service.getDeviceEncoderPosition("STEPS")
+#                        I_LOG(f"{self.conn['name']}: incdiff: {incencoder-devencoder} positionInSteps: {devencpos} {traj[0][2]-devencpos} tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
+                        
                         command.actor.write("i", **status, internal=True)
 
                         try:
@@ -214,6 +223,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 except Exception as ex:
                     W_LOG(f"exception received: {ex}")
                     await asyncio.sleep(0.5)
+
+            incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
+            devencoder=self.service.getDeviceEncoderPosition("STEPS")
+            I_LOG(f"{self.conn['name']}: incdiff: {incencoder-devencoder}")
 
 
         except Exception as ex:
@@ -302,7 +315,14 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             position = self._sid_mpiaMocon(target)[0][2] + offset_in_steps
 
-            I_LOG(f"field angle {position} steps")
+            incencoder = self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
+            devencoder = self.service.getDeviceEncoderPosition("STEPS")
+            diffencoder = devencoder - incencoder
+            if abs(diffencoder) > 42:
+                W_LOG(f"{self.conn['name']}: adjusting sw encoder with inc encoder, incdiff: {diffencoder} {devencoder} {incencoder}")
+                self.service.setPosition(incencoder, "STEPS")
+
+#            I_LOG(f"field angle {position} steps")
             self.service.moveAbsoluteStart(position - self.backlashInSteps, "STEPS")
 
             while not self.service.moveAbsoluteCompletion().isDone():
