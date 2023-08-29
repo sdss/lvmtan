@@ -130,7 +130,6 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
         ):
             Nice.U9_LOG(self.cfgNode.node("SERVICE").String)
             self.service = Basda.Basdard.interface(self.cfgNode.node("SERVICE").String)
-#            A_LOG(self.service.config().path())
             dev_name = self.service.config().node("DEVICE").String
 
             self.device = Basda.Basdard.device(dev_name)

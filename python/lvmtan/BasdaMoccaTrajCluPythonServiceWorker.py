@@ -38,7 +38,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         BasdaMoccaXCluPythonServiceWorker.__init__(self, _svcName)
 
         self.schema["properties"]["SkyPA"] = {"type": "number"}
-        self.schema["properties"]["LostSteps"] = {"type": "number"}
+        self.schema["properties"]["OffsetInSkyDeg"] = {"type": "number"}
 
         self.task = None
         self.task_loop_active = False
@@ -75,6 +75,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.seg_time_current = self.seg_time_default = 1
         self.seg_min_num_current = self.seg_min_num_default = 3
         self.seg_offset_add = None
+        self.seg_offset_current = 0.0
 
         self.traj_time_left = 0.0
  
@@ -83,7 +84,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
 
 
+    async def _status(self, reachable=True):
+        """Status implementation"""
 
+        status = await BasdaMoccaXCluPythonServiceWorker._status(self, reachable=reachable)
+        status["OffsetInSkyDeg"] = self.seg_offset_current
+        return status
 
     async def _stopMovement(self):
         try:
@@ -112,7 +118,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                                   polyN=polyN,
                                   time=time)
 
-#        N_LOG(f"{time} {traj}")
         return traj
 
 
@@ -159,8 +164,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             for i in range(self.seg_min_num_current+1):
                 await setSegment(self, i, traj[i], offset_in_steps=offset_in_steps)
 
+            self.seg_offset_current = offset_in_steps / self.skydegToSteps
+
             # profile start from beginning
             self._chat(1, 222, self.device_module, 0)
+
+            # check encoders
             incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
             devencoder=self.service.getDeviceEncoderPosition("STEPS")
             I_LOG(f"{self.conn['name']}: incdiff: {incencoder-devencoder}")
@@ -190,12 +199,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                             I_LOG(f"Changed traj: {traj}")
                             await setSegment(self, upidx, traj[0], traj[1], offset_in_steps=offset_in_steps)                            
                             offset_in_steps+=self.seg_offset_add
+                            self.seg_offset_current = offset_in_steps / self.skydegToSteps
                             self.seg_offset_add=None
                         else:
                             await setSegment(self, upidx, traj[0], traj[1], offset_in_steps=offset_in_steps)
 
-#                        await setSegment(self, upidx, traj[0], traj[1], offset_in_steps=offset_in_steps)
-                        
+
                         if self.traj_time_left  < (self.seg_min_num_current-1 * self.seg_time_current):
                             N_LOG(f"{self.conn['name']}: tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
 #                        I_LOG(f"{self.conn['name']}: tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
@@ -203,9 +212,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                         upidx+=1
 
                         status = await self._status(self.service.isReachable())
-                        devencpos=int(status['DeviceEncoder']['Position'])
-                        incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
-                        devencoder=self.service.getDeviceEncoderPosition("STEPS")
+
+#                        devencpos=int(status['DeviceEncoder']['Position'])
+#                        incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
+#                        devencoder=self.service.getDeviceEncoderPosition("STEPS")
+
 #                        I_LOG(f"{self.conn['name']}: incdiff: {incencoder-devencoder} positionInSteps: {devencpos} {traj[0][2]-devencpos} tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
                         
                         command.actor.write("i", **status, internal=True)
@@ -306,11 +317,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         try:
             await self._slewStop()
 
+            self.seg_offset_current = offset_angle
             offset_in_steps = offset_angle * self.skydegToSteps
 
             targ = astropy.coordinates.SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg))
-#            I_LOG(astropy.version.version)
-
             target = Target(targ)
 
             position = self._sid_mpiaMocon(target)[0][2] + offset_in_steps
@@ -376,7 +386,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
 
     @command_parser.command("slewAdjust")
-    @click.option("--offset_angle", type=float, default=0.0, show_default=True, help="Derotation offset in degree (9000 motor steps/sky degree).",)
+    @click.option("--offset_angle", type=float, default=0.0, show_default=True, help="Derotation offset in sky degree (9000 motor steps/sky degree).",)
     @click.option("--seg_min_num", type=int, default=None, help="Minimal number of trajectory segments in buffer.",)
     @BasdaCluPythonServiceWorker.wrapper
     async def slewAdjust(

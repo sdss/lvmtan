@@ -11,6 +11,7 @@ from sys import maxsize
 import time
 from random import random
 from datetime import datetime
+from math import nan
 
 from Basda import ServiceIsBusyException
 
@@ -89,7 +90,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 
 
     async def _status(self, reachable=True):
-        """Check status implementation"""
+        """Status implementation"""
         lock = asyncio.Lock()
             
         async with lock:
@@ -99,28 +100,27 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                         startPollTime = datetime.now()
 
                         switchStatusName = None
-                        switchStatusValue = "Unknown"
+                        switchStatusValue = nan
                         if self.hasLimitSwitch:
                             switchStatusName = "AtLimit"
-                            switchStatusValue = self.service.isAtLimit() if reachable else "Unknown"
+                            switchStatusValue = self.service.isAtLimit() if reachable else nan
                         else:
                             switchStatusName = "PositionSwitchStatus"
-                            switchStatusValue = int(self.service.getPositionSwitchStatus()[0].getValue()) if reachable else "Unknown"
+                            switchStatusValue = int(self.service.getPositionSwitchStatus()[0].getValue()) if reachable else nan
 
                         self.statusCacheData = {
                             "Reachable": reachable,
                             "AtHome": self.service.isAtHome() if reachable else "Unknown",
                             "Moving": self.service.isMoving() if reachable else "Unknown",
                             switchStatusName: switchStatusValue,
-                            "Position": self.service.getPosition() if reachable else "Unknown",
-                            "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else "Unknown",
+                            "Position": self.service.getPosition() if reachable else nan,
+                            "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else nan,
                                               "Unit": "STEPS"},
-                            "Velocity": self.service.getVelocity() if reachable else "Unknown",
+                            "Velocity": self.service.getVelocity() if reachable else nan,
                         }
 
-#                        if self.hasIncrementalEncoder:
-#                            self.statusCacheData["IncrementalEncoderPosition"] = self.service.getIncrementalEncoderPosition() if reachable else "Unknown",
-                            
+                        if self.hasIncrementalEncoder:
+                            self.statusCacheData["IncrementalEncoderPosition"] = self.service.getIncrementalEncoderPosition() if reachable else nan
 
                         self.statusCacheTimestamp = datetime.now()
                         polltime = (datetime.now()-startPollTime).total_seconds()
