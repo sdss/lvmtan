@@ -333,6 +333,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             self.positive_direction = (traj[0][2] - traj[1][2]) < 0
             U1_LOG(f"{traj} {self.positive_direction}")
 
+            backlashInSteps = self.backlashInSteps if self.positive_direction else -self.backlashInSteps
 
             incencoder = self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
             devencoder = self.service.getDeviceEncoderPosition("STEPS")
@@ -342,7 +343,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 self.service.setPosition(incencoder, "STEPS")
 
 #            I_LOG(f"field angle {position} steps")
-            self.service.moveAbsoluteStart(position - self.backlashInSteps, "STEPS")
+            self.service.moveAbsoluteStart(position - backlashInSteps, "STEPS")
 
             while not self.service.moveAbsoluteCompletion().isDone():
                 await asyncio.sleep(0.5)
@@ -356,7 +357,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             abs_positioning_compensation = position_current - position
             U9_LOG(f"{traj} {abs_positioning_compensation}")
 
-            self.service.moveRelative(self.backlashInSteps + abs_positioning_compensation, "STEPS")
+            self.service.moveRelative(backlashInSteps + abs_positioning_compensation, "STEPS")
 
             position_error = position_current - self.service.getDeviceEncoderPosition("STEPS")
 
@@ -364,9 +365,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 A_LOG(f"position error {position_error} steps")
                 command.warning(LostSteps=position_error)
                 raise LvmTanPositionError(position_error)
-
-            
-
 
         except Exception as e:
             return command.fail(error=e)
