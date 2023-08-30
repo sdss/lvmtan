@@ -23,7 +23,7 @@ from lvmtipo.fiber import Fiber
 from lvmtipo.siderostat import Siderostat
 from lvmtipo.site import Site
 from lvmtipo.target import Target
-from Nice import A_LOG, E_LOG, F_LOG, I_LOG, N_LOG, U8_LOG, U1_LOG
+from Nice import A_LOG, E_LOG, F_LOG, I_LOG, N_LOG, U8_LOG, U1_LOG, U9_LOG
 
 from .BasdaMoccaXCluPythonServiceWorker import *
 from .exceptions import *
@@ -39,6 +39,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         self.schema["properties"]["SkyPA"] = {"type": "number"}
         self.schema["properties"]["OffsetInSkyDeg"] = {"type": "number"}
+        self.schema["properties"]["MovingInPosDirection"] = {"type": "boolean"}
 
         self.task = None
         self.task_loop_active = False
@@ -76,10 +77,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.seg_min_num_current = self.seg_min_num_default = 3
         self.seg_offset_add = None
         self.seg_offset_current = 0.0
+        self.positive_direction = True
 
         self.traj_time_left = 0.0
  
         self.homeToIncEncOffset = -140
+        
  
         I_LOG(f"site: {self.site}, homeOffset: {self.homeOffset}, homeIsWest: {self.homeIsWest}, azang: {azang}, medSign {medSign}")
 
@@ -89,7 +92,9 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
         status = await BasdaMoccaXCluPythonServiceWorker._status(self, reachable=reachable)
         status["OffsetInSkyDeg"] = self.seg_offset_current
+        status["MovingInPosDirection"] = self.positive_direction
         return status
+
 
     async def _stopMovement(self):
         try:
@@ -142,10 +147,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                 velocity=round(65536.0*(current_steps+offset)/cycsteps)
 
                 absposition=seg[2]+offset
-                if offset >= 0:
-                    return [[cycsteps, velocity, int(absposition)], [0, 0, int(absposition+current_steps)]]
+                #if offset >= 0:
+                #    return [[cycsteps, velocity, int(absposition)], [0, 0, int(absposition+current_steps)]]
                 # else:
                 #     return [[0, 0, seg[2]], [cycsteps, velocity, absposition]]
+                return [[cycsteps, velocity, int(absposition)], [0, 0, int(absposition+current_steps)]]
 
             try:
                 # clear buffer
@@ -213,11 +219,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
                         status = await self._status(self.service.isReachable())
 
-#                        devencpos=int(status['DeviceEncoder']['Position'])
-#                        incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
-#                        devencoder=self.service.getDeviceEncoderPosition("STEPS")
+                        devencpos=int(status['DeviceEncoder']['Position'])
+                        incencoder=self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
+                        devencoder=self.service.getDeviceEncoderPosition("STEPS")
 
-#                        I_LOG(f"{self.conn['name']}: incdiff: {incencoder-devencoder} positionInSteps: {devencpos} {traj[0][2]-devencpos} tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
+                        I_LOG(f"{self.conn['name']}: incdiff: {incencoder-devencoder} positionInSteps: {devencpos} {traj[0][2]-devencpos} tleft: {self.traj_time_left} idx: {upidx} moidx: {moidx}")
                         
                         command.actor.write("i", **status, internal=True)
 
@@ -311,7 +317,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         self.seg_time_current = seg_time if seg_time else self.seg_time_default
         self.seg_min_num_current = seg_min_num if seg_min_num else self.seg_min_num_default
 
-        
         I_LOG(f"start slew now {ra} {dec} offset_ang: {offset_angle} traj_segment_time: { self.seg_time_current} traj_seg_min_num: {self.seg_min_num_current} site: {self.site}")
 
         try:
@@ -323,7 +328,11 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             targ = astropy.coordinates.SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg))
             target = Target(targ)
 
-            position = self._sid_mpiaMocon(target)[0][2] + offset_in_steps
+            traj = self._sid_mpiaMocon(target)
+            position = traj[0][2] + offset_in_steps
+            self.positive_direction = (traj[0][2] - traj[1][2]) < 0
+            U1_LOG(f"{traj} {self.positive_direction}")
+
 
             incencoder = self.service.getIncrementalEncoderPosition() - self.homeToIncEncOffset
             devencoder = self.service.getDeviceEncoderPosition("STEPS")
@@ -341,14 +350,23 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
 
             self.service.moveAbsoluteWait()
 
-            self.service.moveRelative(self.backlashInSteps, "STEPS")
+            now = astropy.time.Time.now()
+            traj = self._sid_mpiaMocon(target, time=now)
+            position_current = traj[0][2] + offset_in_steps
+            abs_positioning_compensation = position_current - position
+            U9_LOG(f"{traj} {abs_positioning_compensation}")
 
-            position_error = position - self.service.getDeviceEncoderPosition("STEPS")
+            self.service.moveRelative(self.backlashInSteps + abs_positioning_compensation, "STEPS")
+
+            position_error = position_current - self.service.getDeviceEncoderPosition("STEPS")
 
             if abs(position_error) > 1:
                 A_LOG(f"position error {position_error} steps")
                 command.warning(LostSteps=position_error)
                 raise LvmTanPositionError(position_error)
+
+            
+
 
         except Exception as e:
             return command.fail(error=e)
@@ -400,8 +418,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         if offset_angle:
             if self.seg_offset_add:
                 return command.fail(error=LvmTanOffsetNotDone())
-            if offset_angle < 0:
-                return command.fail(error=LvmTanNotImplemented())
+            if self.positive_direction and offset_angle < 0:
+                    return command.fail(error=LvmTanNotImplemented())
+            if not self.positive_direction and offset_angle > 0:
+                    return command.fail(error=LvmTanNotImplemented())
 
             self.seg_offset_add = offset_angle * self.skydegToSteps
             await asyncio.sleep(self.seg_time_current*3)
