@@ -150,6 +150,14 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
         ):
             self.unit = self.cfgNode.node("UNIT").String
 
+        if (
+            self.cfgNode.exist("FULLTURN")
+            and self.cfgNode.node("FULLTURN").hasLeaf()
+        ):
+            self.fullturn = self.cfgNode.node("FULLTURN").Int
+        else:
+            self.fullturn = 0
+
 
 
     def abort(self):

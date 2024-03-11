@@ -54,7 +54,10 @@ class BasdaMoccaCluPythonServiceWorker(BasdaMoccaBaseCluPythonServiceWorker):
     async def getPosition(self, command: Command):
         """Returns internal motorcontroller position counter"""
         try:
-            return command.finish(Position=self.service.getPosition())
+            if self.fullturn:
+                return command.finish(Position=((self.service.getPosition()%self.fullturn)+self.fullturn)%self.fullturn)
+            else:
+                return command.finish(Position=self.service.getPosition())
         except Exception as e:
             command.fail(error=e)
 
