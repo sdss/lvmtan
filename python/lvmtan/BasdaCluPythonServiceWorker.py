@@ -132,7 +132,7 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
             self.service = Basda.Basdard.interface(self.cfgNode.node("SERVICE").String)
             dev_name = self.service.config().node("DEVICE").String
 
-            self.device = Basda.Basdard.device(dev_name)
+            self.device = Basda.Basdard.device(dev_name)q
 
             self.simulate = self.device.config().node("LOAD").MapStringString["LIB"] == "BasdaMoccaNDeviceDummy"
             I_LOG(f"simulate: {self.simulate}")
@@ -150,14 +150,15 @@ class BasdaCluPythonServiceWorker(BasdaService.Worker):
         ):
             self.unit = self.cfgNode.node("UNIT").String
 
+
         if (
-            self.cfgNode.exist("FULLTURN")
-            and self.cfgNode.node("FULLTURN").hasLeaf()
+            self.device.config().exist("CFG.FULLTURN")
+            and self.device.config().node("CFG.FULLTURN").hasLeaf()
         ):
-            self.fullturn = self.cfgNode.node("FULLTURN").Int
+            self.fullturn = self.device.config().node("CFG.FULLTURN").Int
+            Nice.U9_LOG(f"Fullturn: { self.fullturn}")
         else:
             self.fullturn = 0
-
 
 
     def abort(self):
