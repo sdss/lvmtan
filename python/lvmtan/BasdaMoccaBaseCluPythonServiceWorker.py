@@ -89,6 +89,10 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
             command.fail(error=e)
 
 
+    def _getPosition(self):
+        return self.service.getPosition()
+
+
     async def _status(self, reachable=True):
         """Status implementation"""
         lock = asyncio.Lock()
@@ -113,7 +117,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
                             "AtHome": self.service.isAtHome() if reachable else "Unknown",
                             "Moving": self.service.isMoving() if reachable else "Unknown",
                             switchStatusName: switchStatusValue,
-                            "Position": self.service.getPosition() if reachable else nan,
+                            "Position": self._getPosition() if reachable else nan,
                             "DeviceEncoder": {"Position": self.service.getDeviceEncoderPosition("STEPS") if reachable else nan,
                                               "Unit": "STEPS"},
                             "Velocity": self.service.getVelocity() if reachable else nan,

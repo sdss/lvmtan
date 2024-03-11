@@ -22,6 +22,11 @@ class BasdaMoccaWheelCluPythonServiceWorker(BasdaMoccaCluPythonServiceWorker):
         BasdaMoccaCluPythonServiceWorker.__init__(self, _svcName)
         self.hasLimitSwitch=False
 
+    def _getPosition(self):
+        if self.fullturn:
+            return ((self.service.getPosition()%self.fullturn)+self.fullturn)%self.fullturn
+        else:
+            return self.service.getPosition()
 
     @command_parser.command("scanAllReferenceSwitches")
     @BasdaCluPythonServiceWorker.wrapper
