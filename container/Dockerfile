@@ -31,11 +31,11 @@ RUN apt install -y python3-setuptools python3-pip python3-toml \
 
 RUN apt update -y && \
     wget -qO - https://svn.mpia.de/repo/linux/ubuntu/archive.key | apt-key add - && \
-    echo "deb [ allow-insecure=yes ] https://svn.mpia.de/repo/linux/ubuntu focal main" > /etc/apt/sources.list.d/mpia.list
+    echo "deb https://svn.mpia.de/repo/linux/ubuntu focal main" > /etc/apt/sources.list.d/mpia.list
 
 RUN apt update -y
 
-RUN apt-get install -y --allow-unauthenticated tan-basda-mocca
+RUN apt-get install -y tan-basda-mocca
 RUN dpkg --purge --force-all python3-astropy
 
 COPY . lvmtan
