@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sdss-lvmtan"
-version = "0.3.7"
+version = "0.3.8"
 description = "Lvm Tan Clu Wrapper"
 authors = ["Florian Briegel <briegel@mpia.de>"]
 license = "BSD-3-Clause"
@@ -21,10 +21,6 @@ packages = [
     { include = "lvmtan", from = "python" }
 ]
 include = ["python/lvmtan/config/*", "python/lvmtan/config/*/*", "python/lvmtan/config/*/*/*"]
-
-[tool.poetry.build]
-script = "build.py"
-generate-setup-file = false
 
 [tool.poetry.scripts]
 container_build = "container:build"
