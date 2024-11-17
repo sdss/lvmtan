@@ -74,7 +74,8 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
             return await self._status(self.service.isReachable())
 
         except Exception as e:
-            command.fail(error=e)
+            E_LOG(f"Exception: {e}")
+            raise
 
 
     @command_parser.command("stop")
@@ -96,7 +97,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
     async def _status(self, reachable=True):
         """Status implementation"""
         lock = asyncio.Lock()
-            
+
         async with lock:
             age = (datetime.now() - self.statusCacheTimestamp).total_seconds()
             if  age > self.statusCacheAge:
@@ -133,7 +134,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 
                     except Exception as e:
                         E_LOG(f"Exception: {e}")
-                        command.fail(error=e)
+                        raise
 
         return self.statusCacheData
 
@@ -241,6 +242,3 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
 
         except Exception as e:
             command.fail(error=e)
-
-
-
