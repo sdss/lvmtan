@@ -304,7 +304,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     @click.option("--offset_angle", type=float, default=0.0, show_default=True, help="Derotation offset in degree (9000 motor steps/sky degree).",)
     @click.option("--seg_time", type=int, default=None, help="Time of one trajectory segment in sec.",)
     @click.option("--seg_min_num", type=int, default=None, help="Minimal number of trajectory segments in buffer.",)
-    @click.option("--degNCP", type=float, default=0.0, help="Alternative derotation offset in degree.",)
+    @click.option("--degNCP", "degNCP", type=float, default=0.0, help="Alternative derotation offset in degree.",)
     @BasdaCluPythonServiceWorker.wrapper
     async def slewStart(
         self,
