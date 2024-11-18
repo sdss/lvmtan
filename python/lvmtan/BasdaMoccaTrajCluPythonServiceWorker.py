@@ -111,13 +111,12 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             command.fail(error=e)
 
 
-    def _sid_mpiaMocon(self, target, polyN=1, seg_time=1, time=None, degNCP=0.0):
+    def _sid_mpiaMocon(self, target, polyN=1, seg_time=1, time=None):
         if not time:
              time = astropy.time.Time.now()
         traj = self.sid.mpiaMocon(self.geoloc,
                                   target,
                                   None,
-                                  degNCP=degNCP,
                                   deltaTime=seg_time,
                                   homeIsWest=self.homeIsWest,
                                   homeOffset=self.homeOffset,
@@ -165,7 +164,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             # create buffer
             rc = self._chat(1, 220, self.device_module, self.derot_buffer, 0)
 
-            traj = self._sid_mpiaMocon(target, polyN=self.seg_min_num_current, seg_time=self.seg_time_current, degNCP=self.degNCP)
+            traj = self._sid_mpiaMocon(target, polyN=self.seg_min_num_current, seg_time=self.seg_time_current)
 
             traj_start = astropy.time.Time.now()
             for i in range(self.seg_min_num_current+1):
@@ -200,7 +199,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
                             pass
 
 #                        N_LOG(f"offCur: {offset_in_steps} offAdd: {self.seg_offset_add}")
-                        traj = self._sid_mpiaMocon(target, seg_time=self.seg_time_current, time = traj_next_seg_time, degNCP=self.degNCP)
+                        traj = self._sid_mpiaMocon(target, seg_time=self.seg_time_current, time = traj_next_seg_time)
                         if self.seg_offset_add:
                             traj=addOffset(traj[0], self.seg_offset_add)
                             I_LOG(f"Changed traj: {traj}")
@@ -304,7 +303,6 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
     @click.option("--offset_angle", type=float, default=0.0, show_default=True, help="Derotation offset in degree (9000 motor steps/sky degree).",)
     @click.option("--seg_time", type=int, default=None, help="Time of one trajectory segment in sec.",)
     @click.option("--seg_min_num", type=int, default=None, help="Minimal number of trajectory segments in buffer.",)
-    @click.option("--degNCP", type=float, default=0.0, help="Alternative derotation offset in degree.",)
     @BasdaCluPythonServiceWorker.wrapper
     async def slewStart(
         self,
@@ -314,12 +312,10 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
         offset_angle: float,
         seg_time: int,
         seg_min_num: int,
-        degNCP: float,
     ):
         """Start slew"""
         self.seg_time_current = seg_time if seg_time else self.seg_time_default
         self.seg_min_num_current = seg_min_num if seg_min_num else self.seg_min_num_default
-        self.degNCP = degNCP
 
         I_LOG(f"start slew now {ra} {dec} offset_ang: {offset_angle} traj_segment_time: { self.seg_time_current} traj_seg_min_num: {self.seg_min_num_current} site: {self.site}")
 
@@ -332,7 +328,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             targ = astropy.coordinates.SkyCoord(ra=ra, dec=dec, unit=(u.hourangle, u.deg))
             target = Target(targ)
 
-            traj = self._sid_mpiaMocon(target, degNCP=self.degNCP)
+            traj = self._sid_mpiaMocon(target)
             position = traj[0][2] + offset_in_steps
             self.positive_direction = (traj[0][2] - traj[1][2]) < 0
             U1_LOG(f"{traj} {self.positive_direction}")
@@ -356,7 +352,7 @@ class BasdaMoccaTrajCluPythonServiceWorker(BasdaMoccaXCluPythonServiceWorker):
             self.service.moveAbsoluteWait()
 
             now = astropy.time.Time.now()
-            traj = self._sid_mpiaMocon(target, time=now, degNCP=self.degNCP)
+            traj = self._sid_mpiaMocon(target, time=now)
             position_current = traj[0][2] + offset_in_steps
             abs_positioning_compensation = position_current - position
             U9_LOG(f"{traj} {abs_positioning_compensation}")
