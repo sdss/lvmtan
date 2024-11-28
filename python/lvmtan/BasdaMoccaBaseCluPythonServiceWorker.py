@@ -25,10 +25,9 @@ import json
 
 import numpy as np
 
-from lvmopstools.retrier import Retrier
-
 from .BasdaCluPythonServiceWorker import (BasdaCluPythonServiceWorker, Command,
                                           asyncio, click, command_parser)
+from .tools import Retrier
 
 
 # TODO: use cluplus
