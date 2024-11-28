@@ -29,11 +29,12 @@ container_stop = "container:stop"
 container_isRunning = "container:isRunning"
 
 [tool.poetry.dependencies]
-python = ">=3.8, <4"
+python = ">=3.10, <4"
 sdsstools = ">=0.4.0"
 sdss-clu = ">=2.0.0"
 sdss-lvmtipo = ">=0.0.36"
 sdss-cluplus = ">=0.0.1"
+lvmopstools = "^0.4.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = ">=3.7.9"

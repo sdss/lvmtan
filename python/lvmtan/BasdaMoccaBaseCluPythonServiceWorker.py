@@ -25,6 +25,8 @@ import json
 
 import numpy as np
 
+from lvmopstools.retrier import Retrier
+
 from .BasdaCluPythonServiceWorker import (BasdaCluPythonServiceWorker, Command,
                                           asyncio, click, command_parser)
 
@@ -93,7 +95,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
     def _getPosition(self):
         return self.service.getPosition()
 
-
+    @Retrier(max_attempts=3, delay=2)
     async def _status(self, reachable=True):
         """Status implementation"""
         lock = asyncio.Lock()
