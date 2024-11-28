@@ -63,7 +63,7 @@ class BasdaMoccaBaseCluPythonServiceWorker(BasdaCluPythonServiceWorker):
         self.hasLimitSwitch = True
         self.statusCacheData = {}
         self.statusCacheTimestamp = datetime(2000,1,1)
-        self.statusCacheAge = 1.0
+        self.statusCacheAge = 2.0
 
 
     async def _stopMovement(self):
