@@ -1,13 +1,7 @@
-FROM ubuntu:20.04
+FROM python:3.12-slim-bookworm
 
 ## Get some karma ##
 MAINTAINER Florian Briegel, briegel@mpia.de
-
-# podman build --tag lvmtan --rm  -f ./container/Dockerfile .
-
-# podman run -ti --rm --name lvmtan -p 40000:40000 -p 5905:5900 -p 8095:6080 -e BASDARD_PORT=40000 -e BASDARD_CONFIG=lvm/lvm.moe-sim.conf -e BASDARD_UI=lvm/lvm.all.ui -e VNC_GEOM=860x900 -e LVM_DEBUG=yes -e LVM_ROOT=/root/lvm -v ~/lnsw/lvmtan:/root/lvm localhost/lvmtan
-
-
 
 RUN apt-get update
 RUN apt-get install -y locales
