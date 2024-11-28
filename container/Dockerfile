@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm
+FROM ubuntu:20.04
 
 ## Get some karma ##
 MAINTAINER Florian Briegel, briegel@mpia.de
@@ -6,10 +6,10 @@ MAINTAINER Florian Briegel, briegel@mpia.de
 RUN apt-get update
 RUN apt-get install -y locales
 
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update -y && \
     apt install -y wget && \
@@ -31,6 +31,10 @@ RUN apt update -y
 
 RUN apt-get install -y tan-basda-mocca
 RUN dpkg --purge --force-all python3-astropy
+
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt update -y
+RUN apt install -y python3.12
 
 COPY . lvmtan
 RUN cd lvmtan && pip3 install .
